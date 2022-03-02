@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>Suricrasia Public Domain Album Player</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div>
+      <h1>titled songs</h1>
+      <h3>by blackle mori</h3>
+      <div class="player">
+        <button class="play paused" data-song="username.mp3"> </button>
+        <div class="player_tools">
+          <p>pitiful</p>
+          <input type="range" min="1" max="1000" value="0" class="slider">
+        </div>
+      </div>
+      <ul class="song_list">
+        <li><button class="play paused" data-song="pitiful.mp3"> </button><p>1. <span class="title">pitiful</span></p> <i>- 1:22</i></li>
+        <li><button class="play paused" data-song="username.mp3"> </button><p>2. <span class="title">username</span></p> <i>- 1:05</i></li>
+        <li><button class="play paused" data-song="bigtittyrenamon.mp3"> </button><p>3. <span class="title">renamon</span></p> <i>- 2:53</i></li>
+      </ul>
+      <p class="madewith">made with <a href="#">blamscamp player</a></p>
+    </div>
+    <div>
+      <img src="cover.jpg" class="cover"/>
+    </div>
+    <script>
+      const audio = new Audio();
+      const slider = document.querySelector(".slider");
+      const play_buttons = document.querySelectorAll(".song_list .play");
+      const big_button = document.querySelector(".player .play");
+      let last_played = -1;
+      audio.onplay = (event) => {
+        //todo: put this in function
+        big_button.classList.add("playing");
+        big_button.classList.remove("paused");
+        if (last_played != -1) {
+          play_buttons[last_played].classList.add("playing");
+          play_buttons[last_played].classList.remove("paused");
+        }
+      }
+      audio.onpause = (event) => {
+        big_button.classList.add("paused");
+        big_button.classList.remove("playing");
+        if (last_played != -1) {
+          play_buttons[last_played].classList.add("paused");
+          play_buttons[last_played].classList.remove("playing");
+        }
+      }
+      audio.onended = (event) => {
+        if (last_played != -1 && last_played + 1 < play_buttons.length) {
+          play_buttons[last_played + 1].onclick();
+        }
+      }
+      big_button.onclick = (event) => {
+        if (last_played == -1) {
+          play_buttons[0].onclick();
+        } else if (audio.paused || audio.ended) {
+          audio.play();
+        } else {
+          audio.pause();
+        }
+      };
+      audio.ontimeupdate = (event) => {
+        slider.value = (audio.currentTime / audio.duration) * 1000;
+      };
+      play_buttons.forEach((e, idx) => {
+        e.onclick = function() {
+          last_played = idx;
+          audio.pause();
+          audio.src = e.dataset.song;
+          document.querySelector(".player p").textContent = e.parentElement.querySelector(".title").textContent;
+          audio.onloadeddata = (event) => {
+            audio.play();
+          };
+          play_buttons.forEach(el => {
+            el.classList.remove("playing");
+            el.classList.add("paused");
+          });
+          e.classList.add("playing");
+          e.classList.remove("paused");
+          big_button.classList.add("playing");
+          big_button.classList.remove("paused");
+        };
+      });
+    </script>
+    <style type="text/css">
+body {
+  font-family: sans-serif;
+  background: white;
+  display: grid;
+  grid-template-columns: 1fr 250px;
+}
+
+.cover {
+  width: 100%;
+}
+
+li, .player {
+  display: flex;
+  align-items: center;
+}
+
+.song_list button.play, .player button.play {
+  overflow: hidden;
+  margin: 5px;
+  border-radius: 0px;
+  border: 1px solid grey;
+  background-color: white;
+  text-align: center;
+  vertical-align: middle;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.song_list button.play {
+  width: 20px;
+  height: 20px;
+}
+
+.player button.play {
+  width: 50px;
+  height: 50px;
+}
+
+.player_tools {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0px 10px;
+}
+
+.player_tools p {
+  margin: 5px 2px;
+}
+
+.song_list {
+  margin: 5px 20px;
+  padding: 0;
+}
+
+.song_list p {
+    margin: 0 5px;
+}
+
+.song_list i {
+  color: grey;
+}
+
+h1, h2, h3, .player {
+  margin: 5px 10px;
+}
+
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 10px;
+  border: 1px solid grey;
+  background: #eee;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+.slider:hover {
+  opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 30px;
+  height: 15px;
+  background: white;
+  border: 1px solid grey;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 25px;
+  height: 25px;
+  background: #04AA6D;
+  cursor: pointer;
+}
+
+button.playing {
+  background-size: contain;
+  background-position: center;
+  background-image: url('data:image/svg+xml,%3Csvg%20width%3D%22100mm%22%20height%3D%22100mm%22%20viewBox%3D%220%200%20100%20100%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M55.29%2019.29h16.63v61.42H55.29zm-27.21%200h16.63v61.42H28.08z%22%20paint-order%3D%22markers%20fill%20stroke%22%2F%3E%3C%2Fsvg%3E');
+}
+
+button.paused {
+  background-size: contain;
+  background-position: center;
+  background-image: url('data:image/svg+xml,<svg%20width%3D"100mm"%20height%3D"100mm"%20viewBox%3D"0%200%20100%20100"%20xmlns%3D"http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg"><path%20d%3D"M23%2020v61l54-30z"%2F><%2Fsvg>');
+}
+
+.madewith {
+  font-size: 70%;
+  opacity: .5;
+}
+    </style>
+  </body>
+</html>
