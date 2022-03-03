@@ -5,6 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <title>blamscamp player</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script type="text/javascript" src="jszip.min.js"></script>
   </head>
   <template id="song">
     <div class="song well">
@@ -18,8 +19,8 @@
       <h1>blamscamp player</h1>
       <p>create a bandcamp-style audio player for selling albums on itch.io</p>
       <!-- <button>import zip</button> -->
-      <div><input type="text" placeholder="album title" id="album"/></div>
-      <div><input type="text" placeholder="artist name" id="artist"/></div>
+      <div><input class="meta_fields" type="text" placeholder="album title" id="album"/></div>
+      <div><input class="meta_fields" type="text" placeholder="artist name" id="artist"/></div>
       <div>cover art: <input type="file" id="cover"/></div>
       <div class="songs">
         <div class="well">
@@ -28,6 +29,7 @@
       </div>
 
       <button id="generate">generate</button>
+      <button id="export">export zip</button>
     </div>
     <div>
       <iframe src="about:blank"></iframe>
@@ -62,7 +64,7 @@
         });
         console.log(tmp_audio.duration);
         const duration = Math.ceil(tmp_audio.duration);
-        return Math.floor(duration / 60) + ":" + (duration % 60);
+        return Math.floor(duration / 60) + ":" + String(duration % 60).padStart(2, '0');
       }
       async function serialize(final) {
         const songs = document.querySelectorAll(".song");
@@ -83,7 +85,7 @@
         }
         return data;
       }
-      function deserialize(data) {
+      function deserialize(zip) {
 
       }
       function run(template) {
@@ -105,41 +107,31 @@
           out = out.replaceAll("[:[songs]:]", songs.join("\n"));
           return out;
         }
-//         const gend = generate({
-//   "blamscamp_version": "0.0.1",
-//   "album": "titled songs",
-//   "artist": "blackle mori",
-//   "cover": "cover.jpg",
-//   "songs": [
-//     {
-//       "title": "pitiful",
-//       "length": "1:21",
-//       "filename": "pitiful.mp3"
-//     },
-//     {
-//       "title": "username",
-//       "length": "0:59",
-//       "filename": "username.mp3"
-//     },
-//     {
-//       "title": "renamon",
-//       "length": "2:53",
-//       "filename": "renamon.mp3"
-//     },
-//   ],
-//   "settings": {
-//     "background-color": "#fff",
-//     "color": "#000",
-//     "highlight-color": "#434",
-//     "button-background-color": "#fff",
-//     "button-foreground-color": "#000",
-//     "extra-css": ""
-//   }
-// });
-        document.querySelector("#generate").onclick = (e) => {
-          serialize(false).then(data => {
-            document.querySelector("iframe").srcdoc = generate(data);
+        document.querySelector("#export").onclick = async (e) => {
+          const data = await serialize(false);
+          let zip = new JSZip();
+          zip.file('blamscamp.json', JSON.stringify(data));
+          zip.file('index.html', generate(data));
+          const files = document.querySelectorAll("input[type='file']");
+          for (let idx = 0; idx < files.length; idx++) {
+            const file = files[idx].files[0];
+            if (file) {
+              const fileReader = new FileReader();
+              zip.file(file.name, await file.arrayBuffer());
+            }
+          }
+          zip.generateAsync({type:"blob"})
+          .then(function (blob) {
+            const a = document.createElement('a');
+            a.download = data.album + "_blamscamp.zip";
+            a.href = URL.createObjectURL(blob);
+            a.click();
+            URL.revokeObjectURL(a.href);
           });
+        };
+        document.querySelector("#generate").onclick = async (e) => {
+          const data = await serialize(false);
+          document.querySelector("iframe").srcdoc = generate(data);
         };
       }
       fetch('_index.html', {method: 'GET'})
@@ -207,6 +199,25 @@ button {
 
 button:hover {
   background-color: #e6e6e6;
+}
+
+.song {
+    display: flex;
+    align-items: center;
+}
+
+.well > * {
+    margin: 0 5px
+}
+
+.song_title {
+    flex-grow: 1;
+}
+
+.meta_fields {
+  width: 450px;
+  max-width: 90%;
+  font-size: 120%;
 }
 
     </style>
