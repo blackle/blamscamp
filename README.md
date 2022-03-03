@@ -2,7 +2,8 @@
 
 # blamscamp
 
-> Mmh, options, runnin' out of options
+> Mmh, options, runnin' out of options,
+>
 > Mmh, options, used to have options
 
 bandcamp is great (at time of writing,) but it would be great to have more options for selling zip files of MP3s on the internet. So I created this tool, which lets you create a bandcamp-style audio player for an individual album. The player is an entirely self-contained website, and can be hosted on a variety of platforms, but was designed specifically for itch.io.
