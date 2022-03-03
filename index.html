@@ -150,7 +150,7 @@
           document.querySelector("iframe").srcdoc = generate(data);
         };
       }
-      fetch('_index.html', {method: 'GET'})
+      fetch('template.html', {method: 'GET'})
       .then(response => response.text())
       .then(text => run(text))
       .catch(error => console.error('error:', error));
