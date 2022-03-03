@@ -9,7 +9,7 @@
   </head>
   <template id="song">
     <div class="song well">
-      <button class="remove_song">remove song</button>
+      <button type="button" class="remove_song">remove song</button>
       <input class="song_title" type="text" placeholder="song title"/>
       <input class="song_file" type="file"/>
     </div>
@@ -19,40 +19,51 @@
       <h1>blamscamp editor</h1>
       <p>create a bandcamp-style audio player for selling albums on itch.io</p>
       <!-- <button>import zip</button> -->
-      <div><input class="meta_fields" type="text" placeholder="album title" id="album"/></div>
-      <div><input class="meta_fields" type="text" placeholder="artist name" id="artist"/></div>
-      <div>cover art: <input type="file" id="cover"/></div>
-      <div class="songs">
-        <div class="well">
-          <button id="add_song">add song</button>
+      <form id="editor">
+        <div><input class="meta_fields" type="text" placeholder="album title" id="album"/></div>
+        <div><input class="meta_fields" type="text" placeholder="artist name" id="artist"/></div>
+        <div>cover art: <input type="file" id="cover"/></div>
+        <div class="songs">
+          <div class="well">
+            <button type="button" id="add_song">add song</button>
+          </div>
         </div>
-      </div>
-      <div><input type="color" value="#ffffff" id="background_color"/> background</div>
-      <div><input type="color" value="#000000" id="foreground_color"/> foreground</div>
-      <div><input type="color" value="#000000" id="highlight_color"/> highlight</div>
+        <div><input type="color" value="#ffffff" id="background_color"/> background</div>
+        <div><input type="color" value="#000000" id="foreground_color"/> foreground</div>
+        <div><input type="color" value="#000000" id="highlight_color"/> highlight</div>
 
-      <button id="generate">generate</button>
-      <button id="export">export zip</button> <div class="spinner hidden"></div>
+        <button type="button" id="generate">generate</button>
+        <button type="button" id="export">export zip</button> <div id="export_spinner" class="spinner hidden"></div>
+        <button type="button" id="import">import zip</button> <div id="import_spinner" class="spinner hidden"></div>
+        <input type="file" accept="application/zip" id="zip_input" class="hidden"/>
+      </form>
     </div>
     <div>
       <iframe src="about:blank"></iframe>
     </div>
     <script>
+      const form = document.getElementById('editor');
       const export_button = document.querySelector("#export");
-      const spinner = document.querySelector(".spinner")
+      const import_button = document.querySelector("#import");
+      const zip_input = document.querySelector("#zip_input");
+      const export_spinner = document.querySelector("#export_spinner");
+      const import_spinner = document.querySelector("#import_spinner");
       const add_song = document.querySelector("#add_song");
       const song_template = document.querySelector('#song');
-      add_song.onclick = () => {
+
+      const add_blank_song = () => {
         const song = document.importNode(song_template.content, true);
         const div = song.querySelector("div");
 
         song.querySelector(".remove_song").onclick = () => {
           div.parentElement.removeChild(div);
         }
-
         const add_song_parent = add_song.parentElement;
         add_song_parent.parentElement.insertBefore(song, add_song_parent);
-      }
+        return div;
+      };
+      add_song.onclick = add_blank_song;
+
       function get_filename(el, final) {
         const file = el.files[0]
         if (final) {
@@ -67,7 +78,7 @@
           tmp_audio.addEventListener('loadedmetadata', resolve, {once:true});
           tmp_audio.src = filename;
         });
-        console.log(tmp_audio.duration);
+        console.debug(filename, tmp_audio.duration);
         const duration = Math.ceil(tmp_audio.duration);
         return Math.floor(duration / 60) + ":" + String(duration % 60).padStart(2, '0');
       }
@@ -77,15 +88,30 @@
         data.blamscamp_version = "0.0.1";
         data.album = document.querySelector("#album").value;
         data.artist = document.querySelector("#artist").value;
-        data.cover = get_filename(document.querySelector('#cover'), final);
+        const cover_input = document.querySelector("#cover");
+        if (final) {
+          data.cover = get_filename(document.querySelector('#cover'), final) || cover_input.cover_filename;
+        } else {
+          data.cover = get_filename(document.querySelector('#cover'), final) || cover_input.cover_fileurl;
+        }
         data.songs = [];
         for (let idx = 0; idx < songs.length; idx++) {
           const file_el = songs[idx].querySelector(".song_file");
           song = {};
           song.idx = idx + 1;
           song.title = songs[idx].querySelector(".song_title").value;
-          song.filename = get_filename(file_el, final);
-          song.time = await get_audio_duration(get_filename(file_el, false));
+          if (file_el.value) {
+            song.filename = get_filename(file_el, final);
+            song.time = await get_audio_duration(get_filename(file_el, false));
+          } else {
+            const song_tag = file_el.closest('.song')
+            if (final) {
+              song.filename = song_tag.song_filename || '';
+            } else {
+              song.filename = song_tag.song_fileurl;
+            }
+            song.time = await get_audio_duration(song_tag.song_fileurl);
+          }
           data.songs[idx] = song;
         }
         data.settings = {};
@@ -94,9 +120,50 @@
         data.settings.highlight_color = document.querySelector("#highlight_color").value;
         return data;
       }
-      function deserialize(zip) {
-        //todo: deserialize from a zip file so people can reload it
-      }
+      async function deserialize(file) {
+        const archive = await JSZip.loadAsync(file);
+        console.debug(archive);
+        if (!('blamscamp.json' in archive.files)) {
+          alert('Cannot find blamscamp.json in the zip archive. Make sure you select a file you exported with blamscamp.');
+          return;
+        }
+        const data = JSON.parse(await archive.files['blamscamp.json'].async('text'));
+        console.debug(data);
+        for (const key of ['album', 'artist']) {
+          form.elements[key].value = data[key];
+        }
+        for (const key of ['background_color', 'foreground_color', 'highlight_color']) {
+          form.elements[key].value = data.settings[key];
+        }
+        document.querySelector('.songs').childNodes.forEach(node => {
+          if (node.nodeType === 1 && node.classList.contains('song')) {
+            node.parentElement.removeChild(node);
+          }
+        });
+        const promises = [];
+        // Deserialize songs. We can't write the file back to the input[type="file"] tag,
+        // so we attach the read file and all the needed information to the song's HTML tag.
+        for (const song of data.songs) {
+          const song_tag = add_blank_song();
+          promises.push(
+            archive.files[song.filename].async('blob')
+            .then(blob => {
+              song_tag.song_blob = blob;
+              song_tag.song_fileurl = URL.createObjectURL(blob);
+              song_tag.song_filename = song.filename;
+              song_tag.querySelector('.song_title').value = song.title;
+            })
+          );
+        }
+        // Do the same for the cover image. Store needed data in the input tag.
+        if (data.cover) {
+          const cover_input = document.querySelector('#cover');
+          cover_input.cover_filename = data.cover;
+          cover_input.cover_blob = await archive.files[data.cover].async('blob');
+          cover_input.cover_fileurl = URL.createObjectURL(cover_input.cover_blob);
+          await Promise.all(promises);
+        }
+      };
       function run(template) {
         const template_song = template.match(/\[:\[song_start\]:\](.*)\[:\[song_end\]:\]/)[1];
         const template_body = template.replace(/\[:\[song_start\]:\].*\[:\[song_end\]:\]/, "[:[songs]:]");
@@ -121,18 +188,26 @@
         }
         export_button.onclick = async (e) => {
           export_button.disabled = true;
-          spinner.classList.remove("hidden");
+          export_spinner.classList.remove("hidden");
           const data = await serialize(true);
           let zip = new JSZip();
           zip.file('blamscamp.json', JSON.stringify(data));
           zip.file('index.html', generate(data));
-          const files = document.querySelectorAll("input[type='file']");
-          for (let idx = 0; idx < files.length; idx++) {
-            const file = files[idx].files[0];
+          const songs = document.querySelectorAll('.song');
+          for (const song of songs) {
+            const file = song.querySelector("input[type='file']").files[0];
             if (file) {
-              const fileReader = new FileReader();
               zip.file(file.name, await file.arrayBuffer());
+            } else {
+              zip.file(song.song_filename, song.song_blob);
             }
+          }
+          const cover_input = document.querySelector('#cover');
+          if (cover_input.files[0]) {
+            const cover_file = cover_input.files[0];
+            zip.file(cover_file.name, await cover_file.arrayBuffer());
+          } else if (cover_input.cover_blob) {
+            zip.file(cover_input.cover_filename, cover_input.cover_blob);
           }
           zip.generateAsync({type:"blob"})
           .then(function (blob) {
@@ -142,14 +217,38 @@
             a.click();
             URL.revokeObjectURL(a.href);
             export_button.disabled = false;
-            spinner.classList.add("hidden");
+            export_spinner.classList.add("hidden");
           });
         };
-        document.querySelector("#generate").onclick = async (e) => {
+        const make_preview = async () => {
           const data = await serialize(false);
           document.querySelector("iframe").srcdoc = generate(data);
+        }
+        document.querySelector("#generate").onclick = () => {
+          make_preview();
         };
-      }
+        form.addEventListener("submit", e => {
+          e.preventDefault();
+          make_preview();
+        });
+        import_button.onclick = () => {
+          zip_input.click();
+        };
+        zip_input.onchange = async e => {
+          import_spinner.classList.remove("hidden");
+          import_button.disabled = true;
+          const file = e.target.files[0];
+          try {
+            await deserialize(file);
+          } catch (error) {
+            throw error;
+          }
+          import_button.disabled = false;
+          import_spinner.classList.add("hidden");
+          make_preview();
+          e.target.value = '';
+        };
+      };
       fetch('template.html', {method: 'GET'})
       .then(response => response.text())
       .then(text => run(text))
