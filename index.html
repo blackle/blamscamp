@@ -54,21 +54,33 @@
           return file ? URL.createObjectURL(file) : "";
         }
       }
-      function serialize(final) {
+      async function get_audio_duration(filename) {
+        const tmp_audio = new Audio();
+        const {data} = await new Promise(resolve => {
+          tmp_audio.addEventListener('loadedmetadata', resolve, {once:true});
+          tmp_audio.src = filename;
+        });
+        console.log(tmp_audio.duration);
+        const duration = Math.ceil(tmp_audio.duration);
+        return Math.floor(duration / 60) + ":" + (duration % 60);
+      }
+      async function serialize(final) {
+        const songs = document.querySelectorAll(".song");
         let data = {};
         data.blamscamp_version = "0.0.1";
         data.album = document.querySelector("#album").value;
         data.artist = document.querySelector("#artist").value;
-        data.cover = get_filename(document.querySelector('#cover'));
-        data.songs = [...document.querySelectorAll(".song")].map((el, idx) => {
+        data.cover = get_filename(document.querySelector('#cover'), final);
+        data.songs = [];
+        for (let idx = 0; idx < songs.length; idx++) {
+          const file_el = songs[idx].querySelector(".song_file");
           song = {};
           song.idx = idx + 1;
-          song.title = el.querySelector(".song_title").value;
-          song.filename = get_filename(el.querySelector(".song_file"));
-          song.time = "0:00"; //TODO
-          return song;
-        });
-        console.log(data.cover);
+          song.title = songs[idx].querySelector(".song_title").value;
+          song.filename = get_filename(file_el, final);
+          song.time = await get_audio_duration(get_filename(file_el, false));
+          data.songs[idx] = song;
+        }
         return data;
       }
       function deserialize(data) {
@@ -125,7 +137,9 @@
 //   }
 // });
         document.querySelector("#generate").onclick = (e) => {
-          document.querySelector("iframe").srcdoc = generate(serialize(false));
+          serialize(false).then(data => {
+            document.querySelector("iframe").srcdoc = generate(data);
+          });
         };
       }
       fetch('_index.html', {method: 'GET'})
