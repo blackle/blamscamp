@@ -22,7 +22,7 @@
       <div><input type="text" placeholder="artist name" id="artist"/></div>
       <div>cover art: <input type="file" id="cover"/></div>
       <div class="songs">
-        <div class="song well">
+        <div class="well">
           <button id="add_song">add song</button>
         </div>
       </div>
@@ -34,15 +34,24 @@
     </div>
     <script>
       const add_song = document.querySelector("#add_song");
+      const song_template = document.querySelector('#song');
       add_song.onclick = () => {
-        const template = document.querySelector('#song');
-        const song = document.importNode(template.content, true);
+        const song = document.importNode(song_template.content, true);
+        const div = song.querySelector("div");
+
+        song.querySelector(".remove_song").onclick = () => {
+          div.parentElement.removeChild(div);
+        }
+
         const add_song_parent = add_song.parentElement;
         add_song_parent.parentElement.insertBefore(song, add_song_parent);
-
-        console.log(song);
-        song.querySelector(".remove_song").onclick = () => {
-          song.parentElement.removeChild(song);
+      }
+      function get_filename(el, final) {
+        const file = el.files[0]
+        if (final) {
+          return file ? file.name : "";
+        } else {
+          return file ? URL.createObjectURL(file) : "";
         }
       }
       function serialize(final) {
@@ -50,13 +59,15 @@
         data.blamscamp_version = "0.0.1";
         data.album = document.querySelector("#album").value;
         data.artist = document.querySelector("#artist").value;
-        const file = document.querySelector('#cover').files[0];
-        if (final) {
-          data.cover = file ? file.name : "";
-        } else {
-          data.cover = file ? URL.createObjectURL(file) : "";
-        }
-        data.songs = [];
+        data.cover = get_filename(document.querySelector('#cover'));
+        data.songs = [...document.querySelectorAll(".song")].map((el, idx) => {
+          song = {};
+          song.idx = idx + 1;
+          song.title = el.querySelector(".song_title").value;
+          song.filename = get_filename(el.querySelector(".song_file"));
+          song.time = "0:00"; //TODO
+          return song;
+        });
         console.log(data.cover);
         return data;
       }

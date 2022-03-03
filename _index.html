@@ -42,7 +42,7 @@
         last_played = -1;
         player_title.textContent = play_buttons[0].parentElement.querySelector(".title").textContent;
         audio.src = play_buttons[0].dataset.song;
-        slider.value = 0;
+        window.setTimeout(() => slider.value = 0, 0);
       }
       reset_player();
       slider.oninput = (event) => {
@@ -90,12 +90,21 @@
       };
       play_buttons.forEach((e, idx) => {
         e.onclick = function() {
-          last_played = idx;
+          if (last_played == idx) {
+            if (audio.paused || audio.ended) {
+              audio.play();
+            } else {
+              audio.pause();
+            }
+            return;
+          }
           audio.pause();
+          last_played = idx;
           audio.src = e.dataset.song;
           player_title.textContent = e.parentElement.querySelector(".title").textContent;
           audio.onloadeddata = (event) => {
             audio.play();
+            audio.onloadeddata = null;
           };
           play_buttons.forEach(el => {
             set_button_state(el, false);
