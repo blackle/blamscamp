@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <title>Suricrasia Public Domain Album Player</title>
+    <title>blamscamp player</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
@@ -15,7 +15,7 @@
         <button class="play paused" data-song="username.mp3"> </button>
         <div class="player_tools">
           <p>pitiful</p>
-          <input type="range" min="1" max="1000" value="0" class="slider">
+          <input type="range" min="0" max="1000" value="0" class="slider">
         </div>
       </div>
       <ul class="song_list">
@@ -29,33 +29,54 @@
       <img src="cover.jpg" class="cover"/>
     </div>
     <script>
+      function set_button_state(button, playing) {
+        button.classList.add(playing ? "playing" : "paused");
+        button.classList.remove(playing ? "paused" : "playing");
+      }
       const audio = new Audio();
       const slider = document.querySelector(".slider");
       const play_buttons = document.querySelectorAll(".song_list .play");
       const big_button = document.querySelector(".player .play");
+      const player_title = document.querySelector(".player p");
       let last_played = -1;
+      let slider_locked = false;
+      audio.src = play_buttons[0].dataset.song;
+      slider.oninput = (event) => {
+        slider_locked = true;
+        audio.pause();
+      };
+      slider.onchange = (event) => {
+        let time = slider.value / 1000 * audio.duration;
+        audio.play();
+        audio.currentTime = time;
+        slider_locked = false;
+      };
       audio.onplay = (event) => {
-        //todo: put this in function
-        big_button.classList.add("playing");
-        big_button.classList.remove("paused");
+        set_button_state(big_button, true);
         if (last_played != -1) {
-          play_buttons[last_played].classList.add("playing");
-          play_buttons[last_played].classList.remove("paused");
+          set_button_state(play_buttons[last_played], true);
         }
-      }
+      };
       audio.onpause = (event) => {
-        big_button.classList.add("paused");
-        big_button.classList.remove("playing");
+        set_button_state(big_button, false);
         if (last_played != -1) {
-          play_buttons[last_played].classList.add("paused");
-          play_buttons[last_played].classList.remove("playing");
+          set_button_state(play_buttons[last_played], false);
         }
-      }
+      };
       audio.onended = (event) => {
         if (last_played != -1 && last_played + 1 < play_buttons.length) {
           play_buttons[last_played + 1].onclick();
+        } else {
+          last_played = -1;
+          player_title.textContent = play_buttons[0].parentElement.querySelector(".title").textContent;
+          slider.value = 0;
         }
-      }
+      };
+      audio.ontimeupdate = (event) => {
+        if (slider_locked == false) {
+          slider.value = (audio.currentTime / audio.duration) * 1000;
+        }
+      };
       big_button.onclick = (event) => {
         if (last_played == -1) {
           play_buttons[0].onclick();
@@ -65,26 +86,20 @@
           audio.pause();
         }
       };
-      audio.ontimeupdate = (event) => {
-        slider.value = (audio.currentTime / audio.duration) * 1000;
-      };
       play_buttons.forEach((e, idx) => {
         e.onclick = function() {
           last_played = idx;
           audio.pause();
           audio.src = e.dataset.song;
-          document.querySelector(".player p").textContent = e.parentElement.querySelector(".title").textContent;
+          player_title.textContent = e.parentElement.querySelector(".title").textContent;
           audio.onloadeddata = (event) => {
             audio.play();
           };
           play_buttons.forEach(el => {
-            el.classList.remove("playing");
-            el.classList.add("paused");
+            set_button_state(el, false);
           });
-          e.classList.add("playing");
-          e.classList.remove("paused");
-          big_button.classList.add("playing");
-          big_button.classList.remove("paused");
+          set_button_state(e, true);
+          set_button_state(big_button, true);
         };
       });
     </script>
@@ -180,25 +195,28 @@ h1, h2, h3, .player {
   background: white;
   border: 1px solid grey;
   cursor: pointer;
+  border-radius: 0;
 }
 
 .slider::-moz-range-thumb {
-  width: 25px;
-  height: 25px;
-  background: #04AA6D;
+  width: 30px;
+  height: 15px;
+  background: white;
+  border: 1px solid grey;
   cursor: pointer;
+  border-radius: 0;
 }
 
 button.playing {
   background-size: contain;
   background-position: center;
-  background-image: url('data:image/svg+xml,%3Csvg%20width%3D%22100mm%22%20height%3D%22100mm%22%20viewBox%3D%220%200%20100%20100%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M55.29%2019.29h16.63v61.42H55.29zm-27.21%200h16.63v61.42H28.08z%22%20paint-order%3D%22markers%20fill%20stroke%22%2F%3E%3C%2Fsvg%3E');
+  background-image: url('data:image/svg+xml,%3Csvg%20width%3D%22100mm%22%20height%3D%22100mm%22%20viewBox%3D%220%200%20100%20100%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill%3D%22%23000%22%20d%3D%22M55.29%2019.29h16.63v61.42H55.29zm-27.21%200h16.63v61.42H28.08z%22%2F%3E%3C%2Fsvg%3E');
 }
 
 button.paused {
   background-size: contain;
   background-position: center;
-  background-image: url('data:image/svg+xml,<svg%20width%3D"100mm"%20height%3D"100mm"%20viewBox%3D"0%200%20100%20100"%20xmlns%3D"http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg"><path%20d%3D"M23%2020v61l54-30z"%2F><%2Fsvg>');
+  background-image: url('data:image/svg+xml,%3Csvg%20width%3D%22100mm%22%20height%3D%22100mm%22%20viewBox%3D%220%200%20100%20100%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill%3D%22%23000%22%20d%3D%22M23%2020v61l54-30z%22%2F%3E%3C%2Fsvg%3E');
 }
 
 .madewith {
