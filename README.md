@@ -12,14 +12,14 @@ bandcamp is great (at time of writing,) but it would be great to have more optio
 
 ## roadmap
 
-[ ] reimport exported zip files for editing
-[ ] bulk import music or zip file of music/cover art
-[ ] auto parsing of music order/title from ID3 tags
-[ ] custom css field
-[ ] option to add additional files to the generated zip file (e.g. so one can set a background image through custom css)
-[ ] option to re-encode audio to lower bitrate
-[ ] auto-updating of the generated player
-[ ] improve mobile support on itch.io. ostensibly only unity games are allowed to have dynamic sizing.
+- [ ] reimport exported zip files for editing
+- [ ] bulk import music or zip file of music/cover art
+- [ ] auto parsing of music order/title from ID3 tags
+- [ ] custom css field
+- [ ] option to add additional files to the generated zip file (e.g. so one can set a background image through custom css)
+- [ ] option to re-encode audio to lower bitrate
+- [ ] auto-updating of the generated player
+- [ ] improve mobile support on itch.io. ostensibly only unity games are allowed to have dynamic sizing.
 
 ## serving
 
@@ -43,10 +43,10 @@ The blamscamp editor, i.e. index.html, also uses Vanilla JS. I see this as a fea
 
 Additionally, I have set a dependency budget of "4" for this project. The target dependencies are:
 
-[X] JSZip (added)
-[ ] an ID3 Tag Parser
-[ ] a MP3 audio encoder
-[ ] (unfilled)
+- [X] JSZip (added)
+- [ ] an ID3 Tag Parser
+- [ ] a MP3 audio encoder
+- [ ] (unfilled)
 
 Dependencies of dependencies count toward the total.
 
