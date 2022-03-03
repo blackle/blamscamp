@@ -27,6 +27,9 @@
           <button id="add_song">add song</button>
         </div>
       </div>
+      <div><input type="color" value="#ffffff" id="background_color"/> background</div>
+      <div><input type="color" value="#000000" id="foreground_color"/> foreground</div>
+      <div><input type="color" value="#000000" id="highlight_color"/> highlight</div>
 
       <button id="generate">generate</button>
       <button id="export">export zip</button> <div class="spinner hidden"></div>
@@ -85,10 +88,14 @@
           song.time = await get_audio_duration(get_filename(file_el, false));
           data.songs[idx] = song;
         }
+        data.settings = {};
+        data.settings.background_color = document.querySelector("#background_color").value;
+        data.settings.foreground_color = document.querySelector("#foreground_color").value;
+        data.settings.highlight_color = document.querySelector("#highlight_color").value;
         return data;
       }
       function deserialize(zip) {
-
+        //todo: deserialize from a zip file so people can reload it
       }
       function run(template) {
         const template_song = template.match(/\[:\[song_start\]:\](.*)\[:\[song_end\]:\]/)[1];
@@ -107,6 +114,9 @@
           out = out.replaceAll("[:[artist]:]", data.artist);
           out = out.replaceAll("[:[cover]:]", data.cover);
           out = out.replaceAll("[:[songs]:]", songs.join("\n"));
+          out = out.replaceAll("[:[background_color]:]", data.settings.background_color);
+          out = out.replaceAll("[:[foreground_color]:]", data.settings.foreground_color);
+          out = out.replaceAll("[:[highlight_color]:]", data.settings.highlight_color);
           return out;
         }
         export_button.onclick = async (e) => {
@@ -189,6 +199,9 @@ iframe {
 
 input {
   margin: 10px 0;
+}
+input[type='color'] {
+  margin: 5px 0;
 }
 
 button {

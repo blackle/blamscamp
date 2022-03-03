@@ -14,7 +14,7 @@
       <div class="player">
         <button class="play paused"> </button>
         <div class="player_tools">
-          <p></p>
+          <p class="title"></p>
           <input type="range" min="0" max="1000" value="0" class="slider">
         </div>
       </div>
@@ -117,7 +117,8 @@
     <style type="text/css">
 body {
   font-family: sans-serif;
-  background: white;
+  background: [:[background_color]:];
+  color: [:[foreground_color]:];
   display: grid;
   grid-template-columns: 1fr 250px;
 }
@@ -174,8 +175,8 @@ li, .player {
     margin: 0 5px;
 }
 
-.song_list i {
-  color: grey;
+.song_list i, .album, .artist, .title {
+  color: [:[highlight_color]:];
 }
 
 h1, h2, h3, .player {
@@ -229,8 +230,11 @@ button.paused {
   background-position: center;
   background-image: url('data:image/svg+xml,%3Csvg%20width%3D%22100mm%22%20height%3D%22100mm%22%20viewBox%3D%220%200%20100%20100%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill%3D%22%23000%22%20d%3D%22M23%2020v61l54-30z%22%2F%3E%3C%2Fsvg%3E');
 }
-
+.madewith, .madewith a {
+  color: [:[foreground_color]:];
+}
 .madewith {
+  color: [:[foreground_color]:];
   font-size: 70%;
   opacity: .5;
 }
