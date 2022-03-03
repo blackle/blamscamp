@@ -19,12 +19,12 @@
         </div>
       </div>
       <ul class="song_list">
-        [:[entry_start]:]<li><button class="play paused" data-song="[:[filename]:]"> </button><p>1. <span class="title">[:[title]:]</span></p> <i>- [:[time]:]</i></li>[:[entry_end]:]
+        [:[song_start]:]<li><button class="play paused" data-song="[:[filename]:]"> </button><p>[:[index]:]. <span class="title">[:[title]:]</span></p> <i>- [:[time]:]</i></li>[:[song_end]:]
       </ul>
       <p class="madewith">made with <a href="#">blamscamp player</a></p>
     </div>
     <div>
-      <img src="cover.jpg" class="cover"/>
+      <img src="[:[cover]:]" class="cover"/>
     </div>
     <script>
       function set_button_state(button, playing) {

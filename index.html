@@ -4,225 +4,186 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <title>blamscamp player</title>
-    <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
+  <template id="song">
+    <div class="song well">
+      <button class="remove_song">remove song</button>
+      <input class="song_title" type="text" placeholder="song title"/>
+      <input class="song_file" type="file"/>
+    </div>
+  </template>
   <body>
-    <div>
-      <h1>titled songs</h1>
-      <h3>by blackle mori</h3>
-      <div class="player">
-        <button class="play paused" data-song="username.mp3"> </button>
-        <div class="player_tools">
-          <p>pitiful</p>
-          <input type="range" min="0" max="1000" value="0" class="slider">
+    <div class="editor">
+      <h1>blamscamp player</h1>
+      <p>create a bandcamp-style audio player for selling albums on itch.io</p>
+      <!-- <button>import zip</button> -->
+      <div><input type="text" placeholder="album title" id="album"/></div>
+      <div><input type="text" placeholder="artist name" id="artist"/></div>
+      <div>cover art: <input type="file" id="cover"/></div>
+      <div class="songs">
+        <div class="song well">
+          <button id="add_song">add song</button>
         </div>
       </div>
-      <ul class="song_list">
-        <li><button class="play paused" data-song="pitiful.mp3"> </button><p>1. <span class="title">pitiful</span></p> <i>- 1:22</i></li>
-        <li><button class="play paused" data-song="username.mp3"> </button><p>2. <span class="title">username</span></p> <i>- 1:05</i></li>
-        <li><button class="play paused" data-song="bigtittyrenamon.mp3"> </button><p>3. <span class="title">renamon</span></p> <i>- 2:53</i></li>
-      </ul>
-      <p class="madewith">made with <a href="#">blamscamp player</a></p>
+
+      <button id="generate">generate</button>
     </div>
     <div>
-      <img src="cover.jpg" class="cover"/>
+      <iframe src="about:blank"></iframe>
     </div>
     <script>
-      function set_button_state(button, playing) {
-        button.classList.add(playing ? "playing" : "paused");
-        button.classList.remove(playing ? "paused" : "playing");
+      const add_song = document.querySelector("#add_song");
+      add_song.onclick = () => {
+        const template = document.querySelector('#song');
+        const song = document.importNode(template.content, true);
+        const add_song_parent = add_song.parentElement;
+        add_song_parent.parentElement.insertBefore(song, add_song_parent);
+
+        console.log(song);
+        song.querySelector(".remove_song").onclick = () => {
+          song.parentElement.removeChild(song);
+        }
       }
-      const audio = new Audio();
-      const slider = document.querySelector(".slider");
-      const play_buttons = document.querySelectorAll(".song_list .play");
-      const big_button = document.querySelector(".player .play");
-      const player_title = document.querySelector(".player p");
-      let last_played = -1;
-      let slider_locked = false;
-      audio.src = play_buttons[0].dataset.song;
-      slider.oninput = (event) => {
-        slider_locked = true;
-        audio.pause();
-      };
-      slider.onchange = (event) => {
-        let time = slider.value / 1000 * audio.duration;
-        audio.play();
-        audio.currentTime = time;
-        slider_locked = false;
-      };
-      audio.onplay = (event) => {
-        set_button_state(big_button, true);
-        if (last_played != -1) {
-          set_button_state(play_buttons[last_played], true);
-        }
-      };
-      audio.onpause = (event) => {
-        set_button_state(big_button, false);
-        if (last_played != -1) {
-          set_button_state(play_buttons[last_played], false);
-        }
-      };
-      audio.onended = (event) => {
-        if (last_played != -1 && last_played + 1 < play_buttons.length) {
-          play_buttons[last_played + 1].onclick();
+      function serialize(final) {
+        let data = {};
+        data.blamscamp_version = "0.0.1";
+        data.album = document.querySelector("#album").value;
+        data.artist = document.querySelector("#artist").value;
+        const file = document.querySelector('#cover').files[0];
+        if (final) {
+          data.cover = file ? file.name : "";
         } else {
-          last_played = -1;
-          player_title.textContent = play_buttons[0].parentElement.querySelector(".title").textContent;
-          slider.value = 0;
+          data.cover = file ? URL.createObjectURL(file) : "";
         }
-      };
-      audio.ontimeupdate = (event) => {
-        if (slider_locked == false) {
-          slider.value = (audio.currentTime / audio.duration) * 1000;
+        data.songs = [];
+        console.log(data.cover);
+        return data;
+      }
+      function deserialize(data) {
+
+      }
+      function run(template) {
+        const template_song = template.match(/\[:\[song_start\]:\](.*)\[:\[song_end\]:\]/)[1];
+        const template_body = template.replace(/\[:\[song_start\]:\].*\[:\[song_end\]:\]/, "[:[songs]:]");
+        function generate(data) {
+          let out = template_body;
+          let songs = data.songs.map((s, idx) => {
+            let song = template_song;
+            song = song.replaceAll("[:[index]:]", idx + 1);
+            song = song.replaceAll("[:[title]:]", s.title);
+            song = song.replaceAll("[:[filename]:]", s.filename);
+            song = song.replaceAll("[:[time]:]", s.time);
+            return song;
+          })
+          out = out.replaceAll("[:[album]:]", data.album);
+          out = out.replaceAll("[:[artist]:]", data.artist);
+          out = out.replaceAll("[:[cover]:]", data.cover);
+          out = out.replaceAll("[:[songs]:]", songs.join("\n"));
+          return out;
         }
-      };
-      big_button.onclick = (event) => {
-        if (last_played == -1) {
-          play_buttons[0].onclick();
-        } else if (audio.paused || audio.ended) {
-          audio.play();
-        } else {
-          audio.pause();
-        }
-      };
-      play_buttons.forEach((e, idx) => {
-        e.onclick = function() {
-          last_played = idx;
-          audio.pause();
-          audio.src = e.dataset.song;
-          player_title.textContent = e.parentElement.querySelector(".title").textContent;
-          audio.onloadeddata = (event) => {
-            audio.play();
-          };
-          play_buttons.forEach(el => {
-            set_button_state(el, false);
-          });
-          set_button_state(e, true);
-          set_button_state(big_button, true);
+//         const gend = generate({
+//   "blamscamp_version": "0.0.1",
+//   "album": "titled songs",
+//   "artist": "blackle mori",
+//   "cover": "cover.jpg",
+//   "songs": [
+//     {
+//       "title": "pitiful",
+//       "length": "1:21",
+//       "filename": "pitiful.mp3"
+//     },
+//     {
+//       "title": "username",
+//       "length": "0:59",
+//       "filename": "username.mp3"
+//     },
+//     {
+//       "title": "renamon",
+//       "length": "2:53",
+//       "filename": "renamon.mp3"
+//     },
+//   ],
+//   "settings": {
+//     "background-color": "#fff",
+//     "color": "#000",
+//     "highlight-color": "#434",
+//     "button-background-color": "#fff",
+//     "button-foreground-color": "#000",
+//     "extra-css": ""
+//   }
+// });
+        document.querySelector("#generate").onclick = (e) => {
+          document.querySelector("iframe").srcdoc = generate(serialize(false));
         };
-      });
+      }
+      fetch('_index.html', {method: 'GET'})
+      .then(response => response.text())
+      .then(text => run(text))
+      .catch(error => console.error('error:', error));
+
     </script>
     <style type="text/css">
+html {
+  background: grey;
+  height: 100%;
+}
+
 body {
   font-family: sans-serif;
   background: white;
   display: grid;
-  grid-template-columns: 1fr 250px;
-}
-
-.cover {
+  grid-template-rows: 1fr 1fr;
+  max-width: 960px;
   width: 100%;
+  height: 100%;
+  margin: auto;
 }
 
-li, .player {
-  display: flex;
-  align-items: center;
+.editor {
+  margin: 0 0 0 10px;
+  overflow-y: scroll;
 }
 
-.song_list button.play, .player button.play {
-  overflow: hidden;
-  margin: 5px;
-  border-radius: 0px;
+h1, h2, h3, p {
+  margin: 10px 0;
+}
+
+iframe {
+  width: 100%;
+  height: 100%;
   border: 1px solid grey;
-  background-color: white;
+  box-sizing: border-box;
+}
+
+.well {
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+    margin: 5px 0;
+    max-width: 80%;
+    background: #eee;
+}
+
+input {
+  margin: 10px 0;
+}
+
+button {
+  margin: 5px 0;
+  border-radius: 0;
+  padding: 4px 8px;
+  border: 1px solid grey;
+  background-color: #eee;
   text-align: center;
   vertical-align: middle;
-  padding: 0;
   cursor: pointer;
   flex-shrink: 0;
 }
 
-.song_list button.play {
-  width: 20px;
-  height: 20px;
+button:hover {
+  background-color: #e6e6e6;
 }
 
-.player button.play {
-  width: 50px;
-  height: 50px;
-}
-
-.player_tools {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 0px 10px;
-}
-
-.player_tools p {
-  margin: 5px 2px;
-}
-
-.song_list {
-  margin: 5px 20px;
-  padding: 0;
-}
-
-.song_list p {
-    margin: 0 5px;
-}
-
-.song_list i {
-  color: grey;
-}
-
-h1, h2, h3, .player {
-  margin: 5px 10px;
-}
-
-.slider {
-  -webkit-appearance: none;
-  width: 100%;
-  height: 10px;
-  border: 1px solid grey;
-  background: #eee;
-  outline: none;
-  opacity: 0.7;
-  -webkit-transition: .2s;
-  transition: opacity .2s;
-}
-
-.slider:hover {
-  opacity: 1;
-}
-
-.slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 30px;
-  height: 15px;
-  background: white;
-  border: 1px solid grey;
-  cursor: pointer;
-  border-radius: 0;
-}
-
-.slider::-moz-range-thumb {
-  width: 30px;
-  height: 15px;
-  background: white;
-  border: 1px solid grey;
-  cursor: pointer;
-  border-radius: 0;
-}
-
-button.playing {
-  background-size: contain;
-  background-position: center;
-  background-image: url('data:image/svg+xml,%3Csvg%20width%3D%22100mm%22%20height%3D%22100mm%22%20viewBox%3D%220%200%20100%20100%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill%3D%22%23000%22%20d%3D%22M55.29%2019.29h16.63v61.42H55.29zm-27.21%200h16.63v61.42H28.08z%22%2F%3E%3C%2Fsvg%3E');
-}
-
-button.paused {
-  background-size: contain;
-  background-position: center;
-  background-image: url('data:image/svg+xml,%3Csvg%20width%3D%22100mm%22%20height%3D%22100mm%22%20viewBox%3D%220%200%20100%20100%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill%3D%22%23000%22%20d%3D%22M23%2020v61l54-30z%22%2F%3E%3C%2Fsvg%3E');
-}
-
-.madewith {
-  font-size: 70%;
-  opacity: .5;
-}
     </style>
   </body>
 </html>
