@@ -29,12 +29,14 @@
       </div>
 
       <button id="generate">generate</button>
-      <button id="export">export zip</button>
+      <button id="export">export zip</button> <div class="spinner hidden"></div>
     </div>
     <div>
       <iframe src="about:blank"></iframe>
     </div>
     <script>
+      const export_button = document.querySelector("#export");
+      const spinner = document.querySelector(".spinner")
       const add_song = document.querySelector("#add_song");
       const song_template = document.querySelector('#song');
       add_song.onclick = () => {
@@ -107,8 +109,10 @@
           out = out.replaceAll("[:[songs]:]", songs.join("\n"));
           return out;
         }
-        document.querySelector("#export").onclick = async (e) => {
-          const data = await serialize(false);
+        export_button.onclick = async (e) => {
+          export_button.disabled = true;
+          spinner.classList.remove("hidden");
+          const data = await serialize(true);
           let zip = new JSZip();
           zip.file('blamscamp.json', JSON.stringify(data));
           zip.file('index.html', generate(data));
@@ -127,6 +131,8 @@
             a.href = URL.createObjectURL(blob);
             a.click();
             URL.revokeObjectURL(a.href);
+            export_button.disabled = false;
+            spinner.classList.add("hidden");
           });
         };
         document.querySelector("#generate").onclick = async (e) => {
@@ -220,6 +226,25 @@ button:hover {
   font-size: 120%;
 }
 
+.spinner {
+  background: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%20-256%201792%201792%22%3E%3Cpath%20d%3D%22M617.492%201123.797q0%2060-42.5%20102t-101.5%2042q-60%200-102-42t-42-102q0-60%2042-102t102-42q59%200%20101.5%2042t42.5%20102zm432%20192q0%2053-37.5%2090.5t-90.5%2037.5q-53%200-90.5-37.5t-37.5-90.5q0-53%2037.5-90.5t90.5-37.5q53%200%2090.5%2037.5t37.5%2090.5zm-608-640q0%2066-47%20113t-113%2047q-66%200-113-47t-47-113q0-66%2047-113t113-47q66%200%20113%2047t47%20113zm1040%20448q0%2046-33%2079t-79%2033q-46%200-79-33t-33-79q0-46%2033-79t79-33q46%200%2079%2033t33%2079zm-832-896q0%2073-51.5%20124.5t-124.5%2051.5q-73%200-124.5-51.5t-51.5-124.5q0-73%2051.5-124.5t124.5-51.5q73%200%20124.5%2051.5t51.5%20124.5zm464-192q0%2080-56%20136t-136%2056q-80%200-136-56t-56-136q0-80%2056-136t136-56q80%200%20136%2056t56%20136zm544%20640q0%2040-28%2068t-68%2028q-40%200-68-28t-28-68q0-40%2028-68t68-28q40%200%2068%2028t28%2068zm-208-448q0%2033-23.5%2056.5t-56.5%2023.5q-33%200-56.5-23.5t-23.5-56.5q0-33%2023.5-56.5t56.5-23.5q33%200%2056.5%2023.5t23.5%2056.5z%22%2F%3E%3C%2Fsvg%3E');
+  width: 20px;
+  height: 20px;
+  background-size: contain;
+  background-position: center;
+  animation: spin 2s ease-in-out infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.hidden {
+  display: none;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
     </style>
   </body>
 </html>
