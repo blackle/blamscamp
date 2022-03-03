@@ -34,7 +34,7 @@
       <button id="generate">generate</button>
       <button id="export">export zip</button> <div class="spinner hidden"></div>
     </div>
-    <div>
+    <div class="preview">
       <iframe src="about:blank"></iframe>
     </div>
     <script>
@@ -176,6 +176,13 @@ body {
 .editor {
   margin: 0 0 0 10px;
   overflow-y: scroll;
+}
+
+.preview {
+  line-height: 0;
+}
+.preview > * {
+  line-height: initial;
 }
 
 h1, h2, h3, p {
