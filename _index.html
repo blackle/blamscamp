@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>[:[album]:] by [:[artist]:]</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="blamscamp player [:[blamscamp_version]:]" />
+  </head>
+  <body>
+    <div>
+      <h1><span class="album">[:[album]:]</span></h1>
+      <h3>by <span class="artist">[:[artist]:]</span></h3>
+      <div class="player">
+        <button class="play paused"> </button>
+        <div class="player_tools">
+          <p></p>
+          <input type="range" min="0" max="1000" value="0" class="slider">
+        </div>
+      </div>
+      <ul class="song_list">
+        [:[entry_start]:]<li><button class="play paused" data-song="[:[filename]:]"> </button><p>1. <span class="title">[:[title]:]</span></p> <i>- [:[time]:]</i></li>[:[entry_end]:]
+      </ul>
+      <p class="madewith">made with <a href="#">blamscamp player</a></p>
+    </div>
+    <div>
+      <img src="cover.jpg" class="cover"/>
+    </div>
+    <script>
+      function set_button_state(button, playing) {
+        button.classList.add(playing ? "playing" : "paused");
+        button.classList.remove(playing ? "paused" : "playing");
+      }
+      const audio = new Audio();
+      const slider = document.querySelector(".slider");
+      const play_buttons = document.querySelectorAll(".song_list .play");
+      const big_button = document.querySelector(".player .play");
+      const player_title = document.querySelector(".player p");
+      let last_played = -1;
+      let slider_locked = false;
+      function reset_player() {
+        last_played = -1;
+        player_title.textContent = play_buttons[0].parentElement.querySelector(".title").textContent;
+        audio.src = play_buttons[0].dataset.song;
+        slider.value = 0;
+      }
+      reset_player();
+      slider.oninput = (event) => {
+        slider_locked = true;
+        audio.pause();
+      };
+      slider.onchange = (event) => {
+        let time = slider.value / 1000 * audio.duration;
+        audio.play();
+        audio.currentTime = time;
+        slider_locked = false;
+      };
+      audio.onplay = (event) => {
+        set_button_state(big_button, true);
+        if (last_played != -1) {
+          set_button_state(play_buttons[last_played], true);
+        }
+      };
+      audio.onpause = (event) => {
+        set_button_state(big_button, false);
+        if (last_played != -1) {
+          set_button_state(play_buttons[last_played], false);
+        }
+      };
+      audio.onended = (event) => {
+        if (last_played != -1 && last_played + 1 < play_buttons.length) {
+          play_buttons[last_played + 1].onclick();
+        } else {
+          reset_player();
+        }
+      };
+      audio.ontimeupdate = (event) => {
+        if (slider_locked == false) {
+          slider.value = (audio.currentTime / audio.duration) * 1000;
+        }
+      };
+      big_button.onclick = (event) => {
+        if (last_played == -1) {
+          play_buttons[0].onclick();
+        } else if (audio.paused || audio.ended) {
+          audio.play();
+        } else {
+          audio.pause();
+        }
+      };
+      play_buttons.forEach((e, idx) => {
+        e.onclick = function() {
+          last_played = idx;
+          audio.pause();
+          audio.src = e.dataset.song;
+          player_title.textContent = e.parentElement.querySelector(".title").textContent;
+          audio.onloadeddata = (event) => {
+            audio.play();
+          };
+          play_buttons.forEach(el => {
+            set_button_state(el, false);
+          });
+          set_button_state(e, true);
+          set_button_state(big_button, true);
+        };
+      });
+    </script>
+    <style type="text/css">
+body {
+  font-family: sans-serif;
+  background: white;
+  display: grid;
+  grid-template-columns: 1fr 250px;
+}
+
+.cover {
+  width: 100%;
+}
+
+li, .player {
+  display: flex;
+  align-items: center;
+}
+
+.song_list button.play, .player button.play {
+  overflow: hidden;
+  margin: 5px;
+  border-radius: 0px;
+  border: 1px solid grey;
+  background-color: white;
+  text-align: center;
+  vertical-align: middle;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.song_list button.play {
+  width: 20px;
+  height: 20px;
+}
+
+.player button.play {
+  width: 50px;
+  height: 50px;
+}
+
+.player_tools {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0px 10px;
+}
+
+.player_tools p {
+  margin: 5px 2px;
+}
+
+.song_list {
+  margin: 5px 20px;
+  padding: 0;
+}
+
+.song_list p {
+    margin: 0 5px;
+}
+
+.song_list i {
+  color: grey;
+}
+
+h1, h2, h3, .player {
+  margin: 5px 10px;
+}
+
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 10px;
+  border: 1px solid grey;
+  background: #eee;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+.slider:hover {
+  opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 30px;
+  height: 15px;
+  background: white;
+  border: 1px solid grey;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.slider::-moz-range-thumb {
+  width: 30px;
+  height: 15px;
+  background: white;
+  border: 1px solid grey;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+button.playing {
+  background-size: contain;
+  background-position: center;
+  background-image: url('data:image/svg+xml,%3Csvg%20width%3D%22100mm%22%20height%3D%22100mm%22%20viewBox%3D%220%200%20100%20100%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill%3D%22%23000%22%20d%3D%22M55.29%2019.29h16.63v61.42H55.29zm-27.21%200h16.63v61.42H28.08z%22%2F%3E%3C%2Fsvg%3E');
+}
+
+button.paused {
+  background-size: contain;
+  background-position: center;
+  background-image: url('data:image/svg+xml,%3Csvg%20width%3D%22100mm%22%20height%3D%22100mm%22%20viewBox%3D%220%200%20100%20100%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill%3D%22%23000%22%20d%3D%22M23%2020v61l54-30z%22%2F%3E%3C%2Fsvg%3E');
+}
+
+.madewith {
+  font-size: 70%;
+  opacity: .5;
+}
+    </style>
+  </body>
+</html>
