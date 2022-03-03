@@ -8,9 +8,13 @@
     <meta name="generator" content="blamscamp player [:[blamscamp_version]:]" />
   </head>
   <body>
-    <div>
+    <div class="column_left">
+      [:if[album]:]
       <h1><span class="album">[:[album]:]</span></h1>
+      [:endif[album]:]
+      [:if[artist]:]
       <h3>by <span class="artist">[:[artist]:]</span></h3>
+      [:endif[artist]:]
       <div class="player">
         <button class="play paused"> </button>
         <div class="player_tools">
@@ -19,13 +23,28 @@
         </div>
       </div>
       <ul class="song_list">
-        [:[song_start]:]<li><button class="play paused" data-song="[:[filename]:]"> </button><p>[:[index]:]. <span class="title">[:[title]:]</span></p> <i>- [:[time]:]</i></li>[:[song_end]:]
+        [:[song_start]:]
+        <li>
+          <button class="play paused" data-song="[:[filename]:]"> </button>
+          <p>
+            [:[index]:].
+            <span class="title">
+            [:if[title]:]
+              [:[title]:]
+            [:else[title]:]
+              Track №[:[index]:]
+            [:endif[title]:]
+            </span>
+          </p> <i>- [:[time]:]</i></li>
+          [:[song_end]:]
       </ul>
       <p class="madewith">made with <a href="https://suricrasia.online/blamscamp/">blamscamp</a></p>
     </div>
-    <div>
+    [:if[cover]:]
+    <div class="column_right">
       <img src="[:[cover]:]" class="cover"/>
     </div>
+    [:endif[cover]:]
     <script>
       function set_button_state(button, playing) {
         button.classList.add(playing ? "playing" : "paused");
@@ -119,8 +138,16 @@ body {
   font-family: sans-serif;
   background: [:[background_color]:];
   color: [:[foreground_color]:];
-  display: grid;
-  grid-template-columns: 1fr 250px;
+  display: flex;
+  flex-flow: row nowrap;
+}
+
+.column_left {
+  flex: 1 1 auto;
+}
+.column_right {
+  width: 250px;
+  flex: 0 0 auto;
 }
 
 .cover {

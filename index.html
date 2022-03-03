@@ -97,26 +97,36 @@
       function deserialize(zip) {
         //todo: deserialize from a zip file so people can reload it
       }
+      const ifHTMLMatcher = (varName) => new RegExp(`\\[:if\\[${varName}\\]:\\]([\\s\\S]*?)(?:\\[:else\\[${varName}\\]:\\]([\\s\\S]*?))?\\[:endif\\[${varName}\\]:\\]`, 'g');
+      const varHTMLMatcher = (varName) => new RegExp(`\\[:\\[${varName}\\]:\\]`, 'g');
+      function applyVarsToTemplate(input, vars) {
+        let output = input;
+        for (const i in vars) {
+          output = output.replace(varHTMLMatcher(i), () => (typeof vars[i] === 'object' ? JSON.stringify(vars[i]) : vars[i]));
+          output = output.replace(ifHTMLMatcher(i), (Array.isArray(vars[i]) ? vars[i].length : vars[i]) ? '$1' : '$2');
+        }
+        return output;
+      };
       function run(template) {
-        const template_song = template.match(/\[:\[song_start\]:\](.*)\[:\[song_end\]:\]/)[1];
-        const template_body = template.replace(/\[:\[song_start\]:\].*\[:\[song_end\]:\]/, "[:[songs]:]");
+        const template_song = template.match(/\[:\[song_start\]:\]([\s\S]*)\[:\[song_end\]:\]/)[1];
+        const template_body = template.replace(/\[:\[song_start\]:\](?:[\s\S]*)\[:\[song_end\]:\]/, "[:[songs]:]");
         function generate(data) {
           let out = template_body;
-          let songs = data.songs.map((s, idx) => {
-            let song = template_song;
-            song = song.replaceAll("[:[index]:]", idx + 1);
-            song = song.replaceAll("[:[title]:]", s.title);
-            song = song.replaceAll("[:[filename]:]", s.filename);
-            song = song.replaceAll("[:[time]:]", s.time);
-            return song;
-          })
-          out = out.replaceAll("[:[album]:]", data.album);
-          out = out.replaceAll("[:[artist]:]", data.artist);
-          out = out.replaceAll("[:[cover]:]", data.cover);
-          out = out.replaceAll("[:[songs]:]", songs.join("\n"));
-          out = out.replaceAll("[:[background_color]:]", data.settings.background_color);
-          out = out.replaceAll("[:[foreground_color]:]", data.settings.foreground_color);
-          out = out.replaceAll("[:[highlight_color]:]", data.settings.highlight_color);
+          let songs = data.songs.map((s, idx) => applyVarsToTemplate(template_song, {
+            index: idx + 1,
+            title: s.title,
+            filename: s.filename,
+            time: s.time
+          }));
+          out = applyVarsToTemplate(out, {
+            album: data.album,
+            artist: data.artist,
+            cover: data.cover,
+            songs: songs.join("\n"),
+            background_color: data.settings.background_color,
+            foreground_color: data.settings.foreground_color,
+            highlight_color: data.settings.highlight_color
+          });
           return out;
         }
         export_button.onclick = async (e) => {
