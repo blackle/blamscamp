@@ -67,7 +67,6 @@
           tmp_audio.addEventListener('loadedmetadata', resolve, {once:true});
           tmp_audio.src = filename;
         });
-        console.log(tmp_audio.duration);
         const duration = Math.ceil(tmp_audio.duration);
         return Math.floor(duration / 60) + ":" + String(duration % 60).padStart(2, '0');
       }
@@ -97,8 +96,8 @@
       function deserialize(zip) {
         //todo: deserialize from a zip file so people can reload it
       }
-      const ifHTMLMatcher = (varName) => new RegExp(`\\[:if\\[${varName}\\]:\\]([\\s\\S]*?)(?:\\[:else\\[${varName}\\]:\\]([\\s\\S]*?))?\\[:endif\\[${varName}\\]:\\]`, 'g');
-      const varHTMLMatcher = (varName) => new RegExp(`\\[:\\[${varName}\\]:\\]`, 'g');
+      const ifHTMLMatcher = (varName) => new RegExp(`<:if:${varName}:>([\\s\\S]*?)(?:<:else:${varName}:>([\\s\\S]*?))?<:endif:${varName}:>`, 'g');
+      const varHTMLMatcher = (varName) => new RegExp(`<:${varName}:>`, 'g');
       function applyVarsToTemplate(input, vars) {
         let output = input;
         for (const i in vars) {
@@ -108,8 +107,8 @@
         return output;
       };
       function run(template) {
-        const template_song = template.match(/\[:\[song_start\]:\]([\s\S]*)\[:\[song_end\]:\]/)[1];
-        const template_body = template.replace(/\[:\[song_start\]:\](?:[\s\S]*)\[:\[song_end\]:\]/, "[:[songs]:]");
+        const template_song = template.match(/<:song_start:>([\s\S]*)<:song_end:>/)[1];
+        const template_body = template.replace(/<:song_start:>(?:[\s\S]*)<:song_end:>/, "<:songs:>");
         function generate(data) {
           let out = template_body;
           let songs = data.songs.map((s, idx) => applyVarsToTemplate(template_song, {
@@ -119,6 +118,7 @@
             time: s.time
           }));
           out = applyVarsToTemplate(out, {
+            blamscamp_version: data.blamscamp_version,
             album: data.album,
             artist: data.artist,
             cover: data.cover,
