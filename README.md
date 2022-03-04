@@ -10,6 +10,11 @@ bandcamp is great (at time of writing,) but it would be great to have more optio
 
 [You can use it here](https://suricrasia.online/blamscamp/)
 
+[Read a guide here](GUIDE.md)
+
+[Youtube tutorial here](https://www.youtube.com/watch?v=fE6G0zSec1E)
+
+
 ## roadmap
 
 - [ ] reimport exported zip files for editing
