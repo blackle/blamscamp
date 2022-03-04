@@ -145,9 +145,20 @@ body {
 .column_left {
   flex: 1 1 auto;
 }
+
 .column_right {
   width: 250px;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+}
+
+@media (max-width: 500px) {
+  body {
+    flex-flow: row wrap-reverse;
+  }
+
+  .column_right {
+    width: 100%;
+  }
 }
 
 .cover {
