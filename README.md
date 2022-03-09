@@ -17,8 +17,8 @@ bandcamp is great (at time of writing,) but it would be great to have more optio
 
 ## roadmap
 
-- [ ] reimport exported zip files for editing
-- [ ] bulk import music or zip file of music/cover art
+- [x] reimport exported zip files for editing
+- [x] bulk import music or zip file of music/cover art
 - [ ] auto parsing of music order/title from ID3 tags
 - [ ] custom css field
 - [ ] option to add additional files to the generated zip file (e.g. so one can set a background image through custom css)
