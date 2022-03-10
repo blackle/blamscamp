@@ -294,7 +294,6 @@
             })
           );
         }
-        songs_rerender();
         // Do the same for the cover image. Store needed data in the input tag.
         if (data.cover) {
           cover_datastore.file = await archive.files[data.cover].async('blob');
@@ -305,8 +304,9 @@
           delete cover_datastore.filename;
           delete cover_datastore.url;
         }
-        cover_art_rerender();
         await Promise.all(promises);
+        cover_art_rerender();
+        songs_rerender();
         make_preview();
       };
 
@@ -397,8 +397,7 @@ body {
   font-family: sans-serif;
   background: white;
   display: grid;
-  grid-template-rows: 1fr 1fr;
-  max-width: 960px;
+  grid-template-columns: 1fr 1fr;
   width: 100%;
   height: 100%;
   margin: auto;
