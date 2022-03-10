@@ -7,30 +7,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script type="text/javascript" src="jszip.min.js"></script>
   </head>
-  <template id="song">
-    <div class="song well">
-      <button type="button" class="remove_song">remove song</button>
-      <input class="song_title" type="text" placeholder="song title"/>
-      <input class="song_file" type="file"/>
-    </div>
-  </template>
   <body>
     <div class="editor">
       <h1>blamscamp editor</h1>
       <p>create a bandcamp-style audio player for selling albums on itch.io. <a href="https://github.com/blackle/blamscamp/blob/main/GUIDE.md">(guide) <a href="https://www.youtube.com/watch?v=fE6G0zSec1E">(youtube)</a> <a href="https://github.com/blackle/blamscamp">(github)</a></p>
-      <!-- <button>import zip</button> -->
       <form id="editor">
-        <div><input class="meta_fields" type="text" placeholder="album title" id="album"/></div>
-        <div><input class="meta_fields" type="text" placeholder="artist name" id="artist"/></div>
-        <div>cover art: <input type="file" id="cover"/></div>
-        <div class="songs">
-          <div class="well">
-            <button type="button" id="add_song">add song</button>
-          </div>
+        <div><input class="meta_fields" type="text" placeholder="album title" data-stored-key="album"/></div>
+        <div><input class="meta_fields" type="text" placeholder="artist name" data-stored-key="artist"/></div>
+        <input class="hidden" type="file" accept="image/*" id="cover_input"/>
+        <div class="well">
+          <span class="cover_art"></span>
+          <button type="button" id="add_song_button">add songs</button>
+          <input class="hidden" type="file" accept="audio/*" multiple="true" id="add_songs_input" />
+          <input class="hidden" type="file" accept="audio/*" id="change_song_input" />
         </div>
-        <div><input type="color" value="#ffffff" id="background_color"/> background</div>
-        <div><input type="color" value="#000000" id="foreground_color"/> foreground</div>
-        <div><input type="color" value="#000000" id="highlight_color"/> highlight</div>
+        <div class="songs_list"></div>
+        <div><input type="color" value="#ffffff" data-stored-scope="settings" data-stored-key="background_color"/> background</div>
+        <div><input type="color" value="#000000" data-stored-scope="settings" data-stored-key="foreground_color"/> foreground</div>
+        <div><input type="color" value="#000000" data-stored-scope="settings" data-stored-key="highlight_color"/> highlight</div>
 
         <button type="button" id="generate">generate</button>
         <button type="button" id="export">export zip</button> <div id="export_spinner" class="spinner hidden"></div>
@@ -42,227 +36,355 @@
       <iframe src="about:blank"></iframe>
     </div>
     <script>
-      const form = document.getElementById('editor');
-      const export_button = document.querySelector("#export");
-      const import_button = document.querySelector("#import");
-      const zip_input = document.querySelector("#zip_input");
-      const export_spinner = document.querySelector("#export_spinner");
-      const import_spinner = document.querySelector("#import_spinner");
-      const add_song = document.querySelector("#add_song");
-      const song_template = document.querySelector('#song');
+      const VERSION = "0.0.1";
 
-      const add_blank_song = () => {
-        const song = document.importNode(song_template.content, true);
-        const div = song.querySelector("div");
-
-        song.querySelector(".remove_song").onclick = () => {
-          div.parentElement.removeChild(div);
-        }
-        const add_song_parent = add_song.parentElement;
-        add_song_parent.parentElement.insertBefore(song, add_song_parent);
-        return div;
+      const $ = selector => document.querySelector(selector),
+            $$ = selector => document.querySelectorAll(selector);
+      /**
+       * Adds an event listener that triggers only if it was called on a specific child element, or its grandchildren.
+       * Suitable child elements are tested against a CSS selector.
+       *
+       * @param {HTMLElement} root The root element that listens for events on its child elements.
+       * @param {HTMLElement} selector The selector to filter child elements.
+       * @param {string} event The name of an Event, like "click" or "change".
+       * @param {Function} callback The callback to call when an event occurs.
+       * `this` will point to the child element that triggered this callback.
+       *
+       * @returns {void}
+       */
+      const delegate = (root, selector, event, callback) => {
+        root.addEventListener(event, e => {
+          const closest = e.target.closest(selector);
+          if (!closest) return;
+          callback.apply(closest, [e]);
+        });
       };
-      add_song.onclick = add_blank_song;
 
-      function get_filename(el, final) {
-        const file = el.files[0]
-        if (final) {
-          return file ? file.name : "";
-        } else {
-          return file ? URL.createObjectURL(file) : "";
+      let common_datastore = {};
+      const isCheckable = tag => tag.type === 'checkbox' || tag.type === 'radio';
+      const gather_fields = () => {
+        common_datastore = {};
+        for (const field of $$("[data-stored-key]")) {
+          const scope = field.getAttribute('data-stored-scope'),
+                key = field.getAttribute('data-stored-key'),
+                value = isCheckable(field) ? field.checked : field.value;
+          if (scope) {
+            if (!(scope in common_datastore)) {
+              common_datastore[scope] = {};
+            }
+            common_datastore[scope][key] = value;
+          } else {
+            common_datastore[key] = value;
+          }
         }
-      }
-      async function get_audio_duration(filename) {
+      };
+      const update_fields = (data) => {
+        for (const field of $$("[data-stored-key]")) {
+          const scope = field.getAttribute('data-stored-scope'),
+                key = field.getAttribute('data-stored-key'),
+                value = scope ? data[scope][key] : data[key];
+          if (isCheckable(field)) {
+            field.checked = value;
+          } else {
+            field.value = value;
+          }
+        }
+      };
+
+      const ifHTMLMatcher = (varName) => new RegExp(`<:if:${varName}:>([\\s\\S]*?)(?:<:else:${varName}:>([\\s\\S]*?))?<:endif:${varName}:>`, "g");
+      const brokenIfHTMLMatcher = /<:if:(\S+):>[\s\S]*?(?:<:else:\1:>([\s\S]*?))?<:endif:\1:>/g
+      const varHTMLMatcher = (varName) => new RegExp(`<:${varName}:>`, "g");
+      function applyVarsToTemplate(input, vars) {
+        let output = input;
+        for (const i in vars) {
+          output = output.replace(varHTMLMatcher(i), () => (typeof vars[i] === 'object' ? JSON.stringify(vars[i]) : vars[i]));
+          output = output.replace(ifHTMLMatcher(i), (Array.isArray(vars[i]) ? vars[i].length : vars[i]) ? "$1" : "$2");
+        }
+        output = output.replace(brokenIfHTMLMatcher, "$2");
+        output = output.replace(varHTMLMatcher("\\S+"), "");
+        return output;
+      };
+
+      const form = $("#editor");
+      const export_button = $("#export");
+      const import_button = $("#import");
+      const zip_input = $("#zip_input");
+      const export_spinner = $("#export_spinner");
+      const import_spinner = $("#import_spinner");
+
+
+      /**
+       * - title (string) — The title of the song, as it is displayed in the playlist
+       * - filename (string) — The name of the imported file, with its extension
+       * - file (Blob) — The audio file itself
+       * - url (string) — A cached link to the file's blob, playable in the preview box
+       * - time (string) — The length of the track in format X:XX
+       */
+      const songs_datastore = [];
+      const song_template = `
+        <div class="song well" data-song-idx="<:idx:>">
+          <button type="button" class="song_remove">remove song</button>
+          <input class="song_title" type="text" value="<:title:>" placeholder="song title"/>
+          <span class="song_duration"><:time:></span>
+          <button type="button" class="song_set">replace file</button>
+          <button type="button" class="song_up <:if:first:>invisible<:endif:first:>">⬆</button>
+          <button type="button" class="song_down <:if:last:>invisible<:endif:last:>">⬇</button>
+        </div>
+      `;
+      const songs_list = $(".songs_list");
+      function songs_rerender() {
+        songs_list.innerHTML = songs_datastore
+          .map((song, idx) => applyVarsToTemplate(song_template, {
+            ...song,
+            idx,
+            first: idx === 0,
+            last: idx === songs_datastore.length - 1
+        })).join("");
+      };
+      async function get_audio_duration(url) {
         const tmp_audio = new Audio();
-        const {data} = await new Promise(resolve => {
-          tmp_audio.addEventListener('loadedmetadata', resolve, {once:true});
-          tmp_audio.src = filename;
+        await new Promise(resolve => {
+          tmp_audio.addEventListener("loadedmetadata", resolve, {once:true});
+          tmp_audio.src = url;
         });
         const duration = Math.ceil(tmp_audio.duration);
-        return Math.floor(duration / 60) + ":" + String(duration % 60).padStart(2, '0');
+        return Math.floor(duration / 60) + ":" + String(duration % 60).padStart(2, "0");
       }
+      /**
+       * @param {Blob} file — the audio file to import
+       */
+      async function add_song(file) {
+        const song = {
+          file,
+          url: URL.createObjectURL(file)
+        };
+        if (file instanceof File) {
+          song.filename = file.name;
+          song.title = file.name
+            .replace(/\.\S+$/, "")
+            .replace(/(\p{Lowercase_Letter})(\p{Uppercase_Letter})/gu, "$1 $2");
+        }
+        song.time = await get_audio_duration(song.url);
+        songs_datastore.push(song);
+        return song;
+      };
+      const add_song_button = $("#add_song_button");
+      const add_songs_input = $("#add_songs_input"),
+            change_song_input = $("#change_song_input");
+      add_song_button.onclick = () => {
+        add_songs_input.click();
+      };
+      add_songs_input.onchange = async e => {
+        const promises = [...e.target.files].map(add_song);
+        await Promise.all(promises);
+        songs_rerender();
+        e.target.value = "";
+        make_preview();
+      };
+      songs_rerender();
+
+      // Event delegation for the sound list
+      delegate(songs_list, '.song_remove', 'click', function (e) {
+        const idx = Number(this.closest('.song').getAttribute('data-song-idx'));
+        songs_datastore.splice(idx, 1);
+        songs_rerender();
+      });
+      let current_sound;
+      delegate(songs_list, '.song_set', 'click',function () {
+        const idx = Number(this.closest('.song').getAttribute('data-song-idx'));
+        current_sound = songs_datastore[idx];
+        change_song_input.click();
+      });
+      change_song_input.onchange = async () => {
+        const file = change_song_input.files[0];
+        current_sound.file = file;
+        current_sound.url = URL.createObjectURL(file);
+        current_sound.time = await get_audio_duration(current_sound.url);
+        current_sound = void 0;
+        change_song_input.value = '';
+        songs_rerender();
+      };
+      delegate(songs_list, '.song_title', 'change', function() {
+        const idx = Number(this.closest('.song').getAttribute('data-song-idx'));
+        songs_datastore[idx].title = this.value.trim();
+      });
+      delegate(songs_list, '.song_up', 'click',function () {
+        const idx = Number(this.closest('.song').getAttribute('data-song-idx'));
+        [songs_datastore[idx], songs_datastore[idx - 1]] = [songs_datastore[idx - 1], songs_datastore[idx]];
+        songs_rerender();
+      });
+      delegate(songs_list, '.song_down', 'click',function () {
+        const idx = Number(this.closest('.song').getAttribute('data-song-idx'));
+        [songs_datastore[idx], songs_datastore[idx + 1]] = [songs_datastore[idx + 1], songs_datastore[idx]];
+        songs_rerender();
+      });
+
+
+      const cover_datastore = {};
+      const cover_template = `
+        <:if:file:>
+          <button type="button" class="cover_art_set">replace cover</button>
+          <button type="button" class="cover_art_remove">remove cover</button>
+        <:else:file:>
+          <button type="button" class="cover_art_set">add cover art</button>
+        <:endif:file:>
+      `;
+      const cover_art_block = $(".cover_art");
+      function cover_art_rerender() {
+        cover_art_block.innerHTML = applyVarsToTemplate(cover_template, cover_datastore);
+      };
+      const cover_input = $("#cover_input");
+      cover_input.onchange = e => {
+        cover_datastore.file = e.target.files[0];
+        // Rename to, for example, cover.jpg
+        cover_datastore.filename = e.target.files[0].name.replace(/[\s\S]+(\.\S+)$/, 'cover$1');
+        cover_datastore.url = URL.createObjectURL(e.target.files[0]);
+        e.target.value = "";
+        cover_art_rerender();
+        make_preview();
+      };
+      delegate(cover_art_block, ".cover_art_set", "click", () => {
+        cover_input.click();
+      });
+      delegate(cover_art_block, ".cover_art_remove", "click", () => {
+        delete cover_datastore.file;
+        delete cover_datastore.filename;
+        delete cover_datastore.url;
+        cover_art_rerender();
+        make_preview();
+      });
+      cover_art_rerender();
+
+
       async function serialize(final) {
-        const songs = document.querySelectorAll(".song");
-        let data = {};
-        data.blamscamp_version = "0.0.1";
-        data.album = document.querySelector("#album").value;
-        data.artist = document.querySelector("#artist").value;
-        const cover_input = document.querySelector("#cover");
-        if (final) {
-          data.cover = get_filename(document.querySelector('#cover'), final) || cover_input.cover_filename;
-        } else {
-          data.cover = get_filename(document.querySelector('#cover'), final) || cover_input.cover_fileurl;
+        gather_fields();
+        let data = {
+          ...common_datastore
+        };
+        data.blamscamp_version = VERSION;
+        if (cover_datastore.file) {
+          data.cover = final ? cover_datastore.filename : cover_datastore.url;
         }
-        data.songs = [];
-        for (let idx = 0; idx < songs.length; idx++) {
-          const file_el = songs[idx].querySelector(".song_file");
-          song = {};
-          song.idx = idx + 1;
-          song.title = songs[idx].querySelector(".song_title").value;
-          if (file_el.value) {
-            song.filename = get_filename(file_el, final);
-            song.time = await get_audio_duration(get_filename(file_el, false));
-          } else {
-            const song_tag = file_el.closest('.song')
-            if (final) {
-              song.filename = song_tag.song_filename || '';
-            } else {
-              song.filename = song_tag.song_fileurl;
-            }
-            song.time = await get_audio_duration(song_tag.song_fileurl);
-          }
-          data.songs[idx] = song;
-        }
-        data.settings = {};
-        data.settings.background_color = document.querySelector("#background_color").value;
-        data.settings.foreground_color = document.querySelector("#foreground_color").value;
-        data.settings.highlight_color = document.querySelector("#highlight_color").value;
+        data.songs = songs_datastore.map((song, idx) => ({
+          idx: idx + 1,
+          filename: final ? song.filename : song.url,
+          title: song.title,
+          time: song.time
+        }));
         return data;
       }
       async function deserialize(file) {
         const archive = await JSZip.loadAsync(file);
-        console.debug(archive);
         if (!('blamscamp.json' in archive.files)) {
           alert('Cannot find blamscamp.json in the zip archive. Make sure you select a file you exported with blamscamp.');
           return;
         }
         const data = JSON.parse(await archive.files['blamscamp.json'].async('text'));
-        console.debug(data);
-        for (const key of ['album', 'artist']) {
-          form.elements[key].value = data[key];
-        }
-        for (const key of ['background_color', 'foreground_color', 'highlight_color']) {
-          form.elements[key].value = data.settings[key];
-        }
-        document.querySelector('.songs').childNodes.forEach(node => {
-          if (node.nodeType === 1 && node.classList.contains('song')) {
-            node.parentElement.removeChild(node);
-          }
-        });
+        update_fields(data);
         const promises = [];
-        // Deserialize songs. We can't write the file back to the input[type="file"] tag,
-        // so we attach the read file and all the needed information to the song's HTML tag.
+        // Deserialize songs.
+        songs_datastore.length = 0;
         for (const song of data.songs) {
-          const song_tag = add_blank_song();
           promises.push(
             archive.files[song.filename].async('blob')
-            .then(blob => {
-              song_tag.song_blob = blob;
-              song_tag.song_fileurl = URL.createObjectURL(blob);
-              song_tag.song_filename = song.filename;
-              song_tag.querySelector('.song_title').value = song.title;
+            .then(blob => add_song(blob))
+            .then(songStored => {
+              songStored.filename = song.filename;
+              songStored.title = song.title;
             })
           );
         }
         // Do the same for the cover image. Store needed data in the input tag.
         if (data.cover) {
-          const cover_input = document.querySelector('#cover');
-          cover_input.cover_filename = data.cover;
-          cover_input.cover_blob = await archive.files[data.cover].async('blob');
-          cover_input.cover_fileurl = URL.createObjectURL(cover_input.cover_blob);
-          await Promise.all(promises);
+          cover_datastore.file = await archive.files[data.cover].async('blob');
+          cover_datastore.filename = data.cover;
+          cover_datastore.url = URL.createObjectURL(cover_datastore.file);
+        } else {
+          delete cover_datastore.file;
+          delete cover_datastore.filename;
+          delete cover_datastore.url;
         }
-      }
-      const ifHTMLMatcher = (varName) => new RegExp(`<:if:${varName}:>([\\s\\S]*?)(?:<:else:${varName}:>([\\s\\S]*?))?<:endif:${varName}:>`, 'g');
-      const varHTMLMatcher = (varName) => new RegExp(`<:${varName}:>`, 'g');
-      function applyVarsToTemplate(input, vars) {
-        let output = input;
-        for (const i in vars) {
-          output = output.replace(varHTMLMatcher(i), () => (typeof vars[i] === 'object' ? JSON.stringify(vars[i]) : vars[i]));
-          output = output.replace(ifHTMLMatcher(i), (Array.isArray(vars[i]) ? vars[i].length : vars[i]) ? '$1' : '$2');
-        }
-        return output;
+        await Promise.all(promises);
+        cover_art_rerender();
+        songs_rerender();
+        make_preview();
       };
-      function run(template) {
-        const template_song = template.match(/<:song_start:>([\s\S]*)<:song_end:>/)[1];
-        const template_body = template.replace(/<:song_start:>(?:[\s\S]*)<:song_end:>/, "<:songs:>");
-        function generate(data) {
-          let out = template_body;
-          let songs = data.songs.map((s, idx) => applyVarsToTemplate(template_song, {
-            index: idx + 1,
-            title: s.title,
-            filename: s.filename,
-            time: s.time
-          }));
-          out = applyVarsToTemplate(out, {
-            blamscamp_version: data.blamscamp_version,
-            album: data.album,
-            artist: data.artist,
-            cover: data.cover,
-            songs: songs.join("\n"),
-            background_color: data.settings.background_color,
-            foreground_color: data.settings.foreground_color,
-            highlight_color: data.settings.highlight_color
-          });
-          return out;
-        }
-        export_button.onclick = async (e) => {
-          export_button.disabled = true;
-          export_spinner.classList.remove("hidden");
-          const data = await serialize(true);
-          let zip = new JSZip();
-          zip.file('blamscamp.json', JSON.stringify(data));
-          zip.file('index.html', generate(data));
-          const songs = document.querySelectorAll('.song');
-          for (const song of songs) {
-            const file = song.querySelector("input[type='file']").files[0];
-            if (file) {
-              zip.file(file.name, await file.arrayBuffer());
-            } else {
-              zip.file(song.song_filename, song.song_blob);
-            }
-          }
-          const cover_input = document.querySelector('#cover');
-          if (cover_input.files[0]) {
-            const cover_file = cover_input.files[0];
-            zip.file(cover_file.name, await cover_file.arrayBuffer());
-          } else if (cover_input.cover_blob) {
-            zip.file(cover_input.cover_filename, cover_input.cover_blob);
-          }
-          zip.generateAsync({type:"blob"})
-          .then(function (blob) {
-            const a = document.createElement('a');
-            a.download = data.album + "_blamscamp.zip";
-            a.href = URL.createObjectURL(blob);
-            a.click();
-            URL.revokeObjectURL(a.href);
-            export_button.disabled = false;
-            export_spinner.classList.add("hidden");
-          });
-        };
-        const make_preview = async () => {
-          const data = await serialize(false);
-          document.querySelector("iframe").srcdoc = generate(data);
-        }
-        document.querySelector("#generate").onclick = () => {
-          make_preview();
-        };
-        form.addEventListener("submit", e => {
-          e.preventDefault();
-          make_preview();
-        });
-        import_button.onclick = () => {
-          zip_input.click();
-        };
-        zip_input.onchange = async e => {
-          import_spinner.classList.remove("hidden");
-          import_button.disabled = true;
-          const file = e.target.files[0];
-          try {
-            await deserialize(file);
-          } catch (error) {
-            throw error;
-          }
-          import_button.disabled = false;
-          import_spinner.classList.add("hidden");
-          make_preview();
-          e.target.value = '';
-        };
-      };
+
+      let template, template_song, template_body;
       fetch('template.html', {method: 'GET'})
       .then(response => response.text())
-      .then(text => run(text))
+      .then(text => {
+        template = text;
+        template_song = template.match(/<:song_start:>([\s\S]*)<:song_end:>/)[1];
+        template_body = template.replace(/<:song_start:>(?:[\s\S]*)<:song_end:>/, "<:songs:>");
+      })
       .catch(error => console.error('error:', error));
+      function generate(data) {
+        let out = template_body;
+        let songs = data.songs.map((song, idx) => applyVarsToTemplate(template_song, {
+          index: idx + 1,
+          ...song
+        }));
+        out = applyVarsToTemplate(out, {
+          blamscamp_version: data.blamscamp_version,
+          album: data.album,
+          artist: data.artist,
+          cover: data.cover,
+          songs: songs.join("\n"),
+          ...data.settings
+        });
+        return out;
+      }
+      export_button.onclick = async (e) => {
+        export_button.disabled = true;
+        export_spinner.classList.remove("hidden");
+        const data = await serialize(true);
+        let zip = new JSZip();
+        zip.file('blamscamp.json', JSON.stringify(data));
+        zip.file('index.html', generate(data));
+        for (const song of songs_datastore) {
+          zip.file(song.filename, song.file);
+        }
+        if (cover_datastore.file) {
+          zip.file(cover_datastore.filename, cover_datastore.file);
+        }
+        const zip_blob = await zip.generateAsync({type:"blob"})
+        const a = document.createElement('a');
+        a.download = data.album + "_blamscamp.zip";
+        a.href = URL.createObjectURL(zip_blob);
+        a.click();
+        URL.revokeObjectURL(a.href);
+        export_button.disabled = false;
+        export_spinner.classList.add("hidden");
+      };
+      const make_preview = async () => {
+        const data = await serialize(false);
+        $("iframe").srcdoc = generate(data);
+      };
+      $("#generate").onclick = () => {
+        make_preview();
+      };
+      form.addEventListener("submit", e => {
+        e.preventDefault();
+        make_preview();
+      });
+      import_button.onclick = () => {
+        zip_input.click();
+      };
+      zip_input.onchange = async e => {
+        import_spinner.classList.remove("hidden");
+        import_button.disabled = true;
+        const file = e.target.files[0];
+        try {
+          await deserialize(file);
+        } catch (error) {
+          throw error;
+        }
+        import_button.disabled = false;
+        import_spinner.classList.add("hidden");
+        make_preview();
+        e.target.value = '';
+      };
 
     </script>
     <style type="text/css">
@@ -275,8 +397,7 @@ body {
   font-family: sans-serif;
   background: white;
   display: grid;
-  grid-template-rows: 1fr 1fr;
-  max-width: 960px;
+  grid-template-columns: 1fr 1fr;
   width: 100%;
   height: 100%;
   margin: auto;
@@ -368,6 +489,9 @@ button:hover {
 
 .hidden {
   display: none;
+}
+.invisible {
+  visibility: hidden;
 }
 
 @keyframes spin {
