@@ -14,9 +14,9 @@
       <form id="editor">
         <div><input class="meta_fields" type="text" placeholder="album title" data-stored-key="album"/></div>
         <div><input class="meta_fields" type="text" placeholder="artist name" data-stored-key="artist"/></div>
-        <div class="cover_art"></div>
         <input class="hidden" type="file" accept="image/*" id="cover_input"/>
         <div class="well">
+          <span class="cover_art"></span>
           <button type="button" id="add_song_button">add songs</button>
           <input class="hidden" type="file" accept="audio/*" multiple="true" id="add_songs_input" />
           <input class="hidden" type="file" accept="audio/*" id="change_song_input" />
@@ -127,6 +127,8 @@
           <input class="song_title" type="text" value="<:title:>" placeholder="song title"/>
           <span class="song_duration"><:time:></span>
           <button type="button" class="song_set">replace file</button>
+          <button type="button" class="song_up <:if:first:>invisible<:endif:first:>">⬆</button>
+          <button type="button" class="song_down <:if:last:>invisible<:endif:last:>">⬇</button>
         </div>
       `;
       const songs_list = $(".songs_list");
@@ -134,7 +136,9 @@
         songs_list.innerHTML = songs_datastore
           .map((song, idx) => applyVarsToTemplate(song_template, {
             ...song,
-          idx
+            idx,
+            first: idx === 0,
+            last: idx === songs_datastore.length - 1
         })).join("");
       };
       async function get_audio_duration(url) {
@@ -181,13 +185,13 @@
 
       // Event delegation for the sound list
       delegate(songs_list, '.song_remove', 'click', function (e) {
-        const idx = this.closest('.song').getAttribute('data-song-idx');
+        const idx = Number(this.closest('.song').getAttribute('data-song-idx'));
         songs_datastore.splice(idx, 1);
         songs_rerender();
       });
       let current_sound;
       delegate(songs_list, '.song_set', 'click',function () {
-        const idx = this.closest('.song').getAttribute('data-song-idx');
+        const idx = Number(this.closest('.song').getAttribute('data-song-idx'));
         current_sound = songs_datastore[idx];
         change_song_input.click();
       });
@@ -201,17 +205,26 @@
         songs_rerender();
       };
       delegate(songs_list, '.song_title', 'change', function() {
-        const idx = this.closest('.song').getAttribute('data-song-idx');
+        const idx = Number(this.closest('.song').getAttribute('data-song-idx'));
         songs_datastore[idx].title = this.value.trim();
+      });
+      delegate(songs_list, '.song_up', 'click',function () {
+        const idx = Number(this.closest('.song').getAttribute('data-song-idx'));
+        [songs_datastore[idx], songs_datastore[idx - 1]] = [songs_datastore[idx - 1], songs_datastore[idx]];
+        songs_rerender();
+      });
+      delegate(songs_list, '.song_down', 'click',function () {
+        const idx = Number(this.closest('.song').getAttribute('data-song-idx'));
+        [songs_datastore[idx], songs_datastore[idx + 1]] = [songs_datastore[idx + 1], songs_datastore[idx]];
+        songs_rerender();
       });
 
 
       const cover_datastore = {};
       const cover_template = `
         <:if:file:>
-          cover art:
-          <button type="button" class="cover_art_set">replace</button>
-          <button type="button" class="cover_art_remove">remove</button>
+          <button type="button" class="cover_art_set">replace cover</button>
+          <button type="button" class="cover_art_remove">remove cover</button>
         <:else:file:>
           <button type="button" class="cover_art_set">add cover art</button>
         <:endif:file:>
@@ -477,6 +490,9 @@ button:hover {
 
 .hidden {
   display: none;
+}
+.invisible {
+  visibility: hidden;
 }
 
 @keyframes spin {
