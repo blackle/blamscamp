@@ -12,8 +12,8 @@
       <h1>blamscamp editor</h1>
       <p>create a bandcamp-style audio player for selling albums on itch.io. <a href="https://github.com/blackle/blamscamp/blob/main/GUIDE.md">(guide) <a href="https://www.youtube.com/watch?v=fE6G0zSec1E">(youtube)</a> <a href="https://github.com/blackle/blamscamp">(github)</a></p>
       <form id="editor">
-        <div><input class="meta_fields" type="text" placeholder="album title" id="album"/></div>
-        <div><input class="meta_fields" type="text" placeholder="artist name" id="artist"/></div>
+        <div><input class="meta_fields" type="text" placeholder="album title" data-stored-key="album"/></div>
+        <div><input class="meta_fields" type="text" placeholder="artist name" data-stored-key="artist"/></div>
         <div class="cover_art"></div>
         <input class="hidden" type="file" accept="image/*" id="cover_input"/>
         <div class="well">
@@ -22,9 +22,9 @@
           <input class="hidden" type="file" accept="audio/*" id="change_song_input" />
         </div>
         <div class="songs_list"></div>
-        <div><input type="color" value="#ffffff" id="background_color"/> background</div>
-        <div><input type="color" value="#000000" id="foreground_color"/> foreground</div>
-        <div><input type="color" value="#000000" id="highlight_color"/> highlight</div>
+        <div><input type="color" value="#ffffff" data-stored-scope="settings" data-stored-key="background_color"/> background</div>
+        <div><input type="color" value="#000000" data-stored-scope="settings" data-stored-key="foreground_color"/> foreground</div>
+        <div><input type="color" value="#000000" data-stored-scope="settings" data-stored-key="highlight_color"/> highlight</div>
 
         <button type="button" id="generate">generate</button>
         <button type="button" id="export">export zip</button> <div id="export_spinner" class="spinner hidden"></div>
@@ -58,6 +58,37 @@
           if (!closest) return;
           callback.apply(closest, [e]);
         });
+      };
+
+      let common_datastore = {};
+      const isCheckable = tag => tag.type === 'checkbox' || tag.type === 'radio';
+      const gather_fields = () => {
+        common_datastore = {};
+        for (const field of $$("[data-stored-key]")) {
+          const scope = field.getAttribute('data-stored-scope'),
+                key = field.getAttribute('data-stored-key'),
+                value = isCheckable(field) ? field.checked : field.value;
+          if (scope) {
+            if (!(scope in common_datastore)) {
+              common_datastore[scope] = {};
+            }
+            common_datastore[scope][key] = value;
+          } else {
+            common_datastore[key] = value;
+          }
+        }
+      };
+      const update_fields = (data) => {
+        for (const field of $$("[data-stored-key]")) {
+          const scope = field.getAttribute('data-stored-scope'),
+                key = field.getAttribute('data-stored-key'),
+                value = scope ? data[scope][key] : data[key];
+          if (isCheckable(field)) {
+            field.checked = value;
+          } else {
+            field.value = value;
+          }
+        }
       };
 
       const ifHTMLMatcher = (varName) => new RegExp(`<:if:${varName}:>([\\s\\S]*?)(?:<:else:${varName}:>([\\s\\S]*?))?<:endif:${varName}:>`, "g");
@@ -213,11 +244,11 @@
 
 
       async function serialize(final) {
-        const songs = $$(".song");
-        let data = {};
+        gather_fields();
+        let data = {
+          ...common_datastore
+        };
         data.blamscamp_version = VERSION;
-        data.album = $("#album").value;
-        data.artist = $("#artist").value;
         if (cover_datastore.file) {
           data.cover = final ? cover_datastore.filename : cover_datastore.url;
         }
@@ -227,10 +258,6 @@
           title: song.title,
           time: song.time
         }));
-        data.settings = {};
-        data.settings.background_color = $("#background_color").value;
-        data.settings.foreground_color = $("#foreground_color").value;
-        data.settings.highlight_color = $("#highlight_color").value;
         return data;
       }
       async function deserialize(file) {
@@ -240,12 +267,7 @@
           return;
         }
         const data = JSON.parse(await archive.files['blamscamp.json'].async('text'));
-        for (const key of ['album', 'artist']) {
-          form.elements[key].value = data[key];
-        }
-        for (const key of ['background_color', 'foreground_color', 'highlight_color']) {
-          form.elements[key].value = data.settings[key];
-        }
+        update_fields(data);
         const promises = [];
         // Deserialize songs.
         songs_datastore.length = 0;
