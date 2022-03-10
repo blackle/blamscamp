@@ -101,7 +101,7 @@
           output = output.replace(ifHTMLMatcher(i), (Array.isArray(vars[i]) ? vars[i].length : vars[i]) ? "$1" : "$2");
         }
         output = output.replace(brokenIfHTMLMatcher, "$2");
-        output = output.replace(varHTMLMatcher("\S+"), "");
+        output = output.replace(varHTMLMatcher("\\S+"), "");
         return output;
       };
 
