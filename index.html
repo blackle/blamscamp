@@ -38,6 +38,11 @@
           <input type="checkbox" data-stored-scope="settings" data-stored-key="theme_transparent" /> leave background transparent in the exports
         </label></div>
 
+        <details class="well">
+          <summary>custom css</summary>
+          <textarea class="code_editor" data-stored-scope="settings" data-stored-key="theme_css"></textarea>
+        </details>
+
         <button type="button" id="generate">generate</button>
         <button type="button" id="export">export zip</button> <div id="export_spinner" class="spinner hidden"></div>
         <button type="button" id="import">import zip</button> <div id="import_spinner" class="spinner hidden"></div>
@@ -96,9 +101,9 @@
                 key = field.getAttribute('data-stored-key'),
                 value = scope ? data[scope][key] : data[key];
           if (isCheckable(field)) {
-            field.checked = value;
+            field.checked = value || false;
           } else {
-            field.value = value;
+            field.value = value || '';
           }
         }
       };
@@ -451,6 +456,17 @@ input {
 }
 input[type='color'] {
   margin: 5px 0;
+}
+
+.code_editor {
+  padding: 0.5rem 1rem;
+  font-family: monospace;
+  width: 100%;
+  box-sizing: border-box;
+  line-height: 1.5;
+  margin: 0;
+  resize: vertical;
+  min-height: 15em;
 }
 
 button {
