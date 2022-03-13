@@ -71,8 +71,10 @@
       let slider_locked = false;
       function reset_player() {
         last_played = -1;
-        player_title.textContent = play_buttons[0].parentElement.querySelector(".title").textContent;
-        audio.src = play_buttons[0].dataset.song;
+        if (play_buttons.length ) {
+            player_title.textContent = play_buttons[0].parentElement.querySelector(".title").textContent;
+            audio.src = play_buttons[0].dataset.song;
+        }
         window.setTimeout(() => slider.value = 0, 0);
       }
       reset_player();
@@ -143,6 +145,7 @@
           set_button_state(e, true);
           set_button_state(big_button, true);
         };
+        set_button_state(e, false);
       });
     </script>
     <style type="text/css">
