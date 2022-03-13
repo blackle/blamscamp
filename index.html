@@ -6,6 +6,7 @@
     <title>blamscamp editor</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script type="text/javascript" src="jszip.min.js"></script>
+    <script type="text/javascript" src="jsmediatags.min.js"></script>
   </head>
   <body>
     <div class="editor">
@@ -150,6 +151,20 @@
         const duration = Math.ceil(tmp_audio.duration);
         return Math.floor(duration / 60) + ":" + String(duration % 60).padStart(2, "0");
       }
+
+      function get_file_tags(file) {
+        return new Promise((resolve, reject) => {
+          jsmediatags.read(file, {
+            onSuccess: (data) => {
+              resolve(data);
+            },
+
+            onError: (error) => {
+              reject(error);
+            }
+          });
+        })
+      }
       /**
        * @param {Blob} file — the audio file to import
        */
@@ -164,7 +179,17 @@
             .replace(/\.\S+$/, "")
             .replace(/(\p{Lowercase_Letter})(\p{Uppercase_Letter})/gu, "$1 $2");
         }
+
         song.time = await get_audio_duration(song.url);
+        try {
+          const { tags } = await get_file_tags(file)
+          if (tags && tags.title != null) {
+            song.title = tags.title;
+          }
+        } catch (err) {
+          console.error('failed to read tags from: ' + file.name, err);
+        }
+
         songs_datastore.push(song);
         return song;
       };
