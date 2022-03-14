@@ -36,6 +36,9 @@
           <input type="checkbox" data-stored-scope="settings" data-stored-key="theme_shadows" /> shadow/glow effects
         </label></div>
         <div><label>
+          <input type="checkbox" data-stored-scope="settings" data-stored-key="theme_borders" /> borders
+        </label></div>
+        <div><label>
           <input type="checkbox" data-stored-scope="settings" data-stored-key="theme_transparent" /> leave background transparent in the exports
         </label></div>
 
@@ -352,6 +355,14 @@
         make_preview();
       };
 
+      function get_hex_brightness(hex) {
+        hex = hex.slice(1);
+        const r = parseInt(hex.substring(0, 2), 16) / 255,
+              g = parseInt(hex.substring(2, 4), 16) / 255,
+              b = parseInt(hex.substring(4, 6), 16) / 255;
+        return 0.2126*r + 0.7152*g + 0.0722*b;
+      };
+
       let template, template_song, template_body;
       fetch('template.html', {method: 'GET'})
       .then(response => response.text())
@@ -373,7 +384,8 @@
           artist: data.artist,
           cover: data.cover,
           songs: songs.join("\n"),
-          ...data.settings
+          ...data.settings,
+          dark_highlight: get_hex_brightness(data.settings.highlight_color) < 0.5
         };
         if (!final) {
           templateVars.theme_transparent = false;
