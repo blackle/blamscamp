@@ -8,7 +8,7 @@
     <meta name="generator" content="blamscamp player <:blamscamp_version:>" />
   </head>
   <body>
-    <svg class="hidden" xmlns="http://www.w3.org/2000/svg" width="24" height="24">
+    <svg style="display: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24">
       <symbol id="icon_play" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></symbol>
       <symbol id="icon_pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></symbol>
     </svg>
@@ -43,7 +43,7 @@
               Track №<:index:>
             <:endif:title:>
             </span>
-          </p> <i>- <:time:></i></li>
+          </p> <i>– <:time:></i></li>
           <:song_end:>
       </ul>
       <p class="madewith">made with <a href="https://suricrasia.online/blamscamp/">blamscamp</a></p>
@@ -245,8 +245,9 @@ button span {
   padding: 0px 10px;
 }
 
-.player_tools p {
-  margin: 5px 2px;
+.player .title {
+  font-size: 125%;
+  margin: 0 0 0.5em;
 }
 
 .song_list {
@@ -258,7 +259,7 @@ button span {
     margin: 0 5px;
 }
 
-.song_list i, .album, .artist, .title {
+.album, .artist, .title {
   color: <:highlight_color:>;
 }
 
