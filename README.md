@@ -14,7 +14,6 @@ bandcamp is great (at time of writing,) but it would be great to have more optio
 
 [Youtube tutorial here](https://www.youtube.com/watch?v=fE6G0zSec1E)
 
-
 ## roadmap
 
 - [x] reimport exported zip files for editing
@@ -48,8 +47,8 @@ The blamscamp editor, i.e. index.html, also uses Vanilla JS. I see this as a fea
 
 Additionally, I have set a dependency budget of "4" for this project. The target dependencies are:
 
-- [X] JSZip (added)
-- [ ] an ID3 Tag Parser
+- [x] JSZip (added)
+- [x] an ID3 Tag Parser
 - [ ] a MP3 audio encoder
 - [ ] (unfilled)
 
