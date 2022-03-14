@@ -336,20 +336,24 @@
         template_body = template.replace(/<:song_start:>(?:[\s\S]*)<:song_end:>/, "<:songs:>");
       })
       .catch(error => console.error('error:', error));
-      function generate(data) {
+      function generate(data, final) {
         let out = template_body;
         let songs = data.songs.map((song, idx) => applyVarsToTemplate(template_song, {
           index: idx + 1,
           ...song
         }));
-        out = applyVarsToTemplate(out, {
+        const templateVars = {
           blamscamp_version: data.blamscamp_version,
           album: data.album,
           artist: data.artist,
           cover: data.cover,
           songs: songs.join("\n"),
           ...data.settings
-        });
+        };
+        if (!final) {
+          templateVars.theme_transparent = false;
+        }
+        out = applyVarsToTemplate(out, templateVars);
         return out;
       }
       export_button.onclick = async (e) => {
@@ -358,7 +362,7 @@
         const data = await serialize(true);
         let zip = new JSZip();
         zip.file('blamscamp.json', JSON.stringify(data));
-        zip.file('index.html', generate(data));
+        zip.file('index.html', generate(data, true));
         for (const song of songs_datastore) {
           zip.file(song.filename, song.file);
         }
@@ -376,7 +380,7 @@
       };
       const make_preview = async () => {
         const data = await serialize(false);
-        $("iframe").srcdoc = generate(data);
+        $("iframe").srcdoc = generate(data, false);
       };
       $("#generate").onclick = () => {
         make_preview();
