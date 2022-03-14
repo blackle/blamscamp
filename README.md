@@ -18,7 +18,8 @@ bandcamp is great (at time of writing,) but it would be great to have more optio
 
 - [x] reimport exported zip files for editing
 - [x] bulk import music or zip file of music/cover art
-- [ ] auto parsing of music order/title from ID3 tags
+- [x] auto parsing of music title from ID3 tags
+- [ ] auto parsing of music order from ID3 tags
 - [ ] custom css field
 - [ ] option to add additional files to the generated zip file (e.g. so one can set a background image through custom css)
 - [ ] option to re-encode audio to lower bitrate
@@ -32,6 +33,7 @@ The following files are needed to host the blamscamp editor:
 - index.html
 - template.html
 - jszip.min.js
+- jsmediatags.min.js
 
 To host the blamscamp player, all you need are the files provided in the exported zip.
 
@@ -63,4 +65,4 @@ Things we would like:
 
 ## license
 
-This software is public domain, aside from the libzip library.
+This software is public domain, aside from the jszip and jsmediatags library.
