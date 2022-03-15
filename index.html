@@ -7,11 +7,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script type="text/javascript" src="jszip.min.js"></script>
     <script type="text/javascript" src="jsmediatags.min.js"></script>
+    <script type="text/javascript" src="iro.min.js"></script>
   </head>
   <body>
     <div class="editor">
       <h1>blamscamp editor</h1>
-      <p>create a bandcamp-style audio player for selling albums on itch.io. <a href="https://github.com/blackle/blamscamp/blob/main/GUIDE.md">(guide) <a href="https://www.youtube.com/watch?v=fE6G0zSec1E">(youtube)</a> <a href="https://github.com/blackle/blamscamp">(github)</a></p>
+      <p>create a bandcamp-style audio player for selling albums on itch.io. <a href="https://github.com/blackle/blamscamp/blob/main/GUIDE.md">(guide)</a> <a href="https://www.youtube.com/watch?v=fE6G0zSec1E">(youtube)</a> <a href="https://github.com/blackle/blamscamp">(github)</a></p>
       <form id="editor">
         <div><input class="meta_fields" type="text" placeholder="album title" data-stored-key="album"/></div>
         <div><input class="meta_fields" type="text" placeholder="artist name" data-stored-key="artist"/></div>
@@ -23,9 +24,14 @@
           <input class="hidden" type="file" accept="audio/*" id="change_song_input" />
         </div>
         <div class="songs_list"></div>
-        <div><input type="color" value="#ffffff" data-stored-scope="settings" data-stored-key="background_color"/> background</div>
-        <div><input type="color" value="#000000" data-stored-scope="settings" data-stored-key="foreground_color"/> foreground</div>
-        <div><input type="color" value="#000000" data-stored-scope="settings" data-stored-key="highlight_color"/> highlight</div>
+        <div class="color_area">
+          <div class="disabled" id="iro"></div>
+          <div class="color_pickers">
+            <div><input class="color_picker" type="text" value="#ffffff" data-stored-scope="settings" data-stored-key="background_color"/> background</div>
+            <div><input class="color_picker" type="text" value="#000000" data-stored-scope="settings" data-stored-key="foreground_color"/> foreground</div>
+            <div><input class="color_picker" type="text" value="#000000" data-stored-scope="settings" data-stored-key="highlight_color"/> highlight</div>
+          </div>
+        </div>
         <div><label>
           <input type="checkbox" data-stored-scope="settings" data-stored-key="theme_round" /> round theme
         </label></div>
@@ -133,6 +139,32 @@
       const export_spinner = $("#export_spinner");
       const import_spinner = $("#import_spinner");
 
+
+      const color_pickers = $$('.color_picker');
+      const iro_obj = new iro.ColorPicker('#iro', {
+        width: 150, layoutDirection: "horizontal"
+      });
+
+      for (let color_picker of color_pickers) {
+        function on_color_change(color) {
+          const hex = color.hexString || color;
+          color_picker.value = hex;
+          //silly way of getting the little swatch next to the input element
+          color_picker.style.backgroundImage = "linear-gradient("+hex+", "+hex+")";
+          //todo: auto-update CSS
+        }
+        color_picker.onfocus = e => {
+          iro_obj.el.classList.remove("disabled");
+          try { iro_obj.color.hexString = color_picker.value }
+          catch { on_color_change("#000000"); }
+          iro_obj.on("color:change", on_color_change);
+        };
+        color_picker.onblur = e => {
+          iro_obj.el.classList.add("disabled");
+          iro_obj.off("color:change", on_color_change);
+        };
+        on_color_change(color_picker.value);
+      }
 
       /**
        * - title (string) — The title of the song, as it is displayed in the playlist
@@ -487,16 +519,17 @@ iframe {
 .well {
     padding: 5px 10px;
     border: 1px solid #ddd;
-    margin: 5px 0;
-    max-width: 80%;
+    margin: 5px 20px 5px 0px;
     background: #eee;
 }
 
 input {
   margin: 10px 0;
 }
-input[type='color'] {
-  margin: 5px 0;
+
+input[type='text'] {
+  border: 1px solid grey;
+  border-radius: 2px;
 }
 
 .code_editor {
@@ -524,6 +557,28 @@ button {
 
 button:hover {
   background-color: #e6e6e6;
+}
+
+.color_area {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.color_pickers {
+  flex-grow: 1;
+  margin-left: 20px;
+}
+
+.color_picker {
+  font-family: monospace;
+  width: 10ch;
+  padding-left: 3ch;
+  background: white no-repeat;
+  background-size: 2ch 100%;
+  font-size: 125%;
 }
 
 .song {
@@ -561,6 +616,10 @@ button:hover {
 }
 .invisible {
   visibility: hidden;
+}
+.disabled {
+  opacity: .5;
+  pointer-events: none;
 }
 
 @keyframes spin {

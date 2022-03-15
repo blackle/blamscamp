@@ -34,6 +34,7 @@ The following files are needed to host the blamscamp editor:
 - template.html
 - jszip.min.js
 - jsmediatags.min.js
+- iro.min.js
 
 To host the blamscamp player, all you need are the files provided in the exported zip.
 
@@ -51,8 +52,8 @@ Additionally, I have set a dependency budget of "4" for this project. The target
 
 - [x] JSZip (added)
 - [x] an ID3 Tag Parser
+- [x] color picker
 - [ ] a MP3 audio encoder
-- [ ] (unfilled)
 
 Dependencies of dependencies count toward the total.
 
@@ -65,4 +66,4 @@ Things we would like:
 
 ## license
 
-This software is public domain, aside from the jszip and jsmediatags library.
+This software is public domain, aside from the [jszip](https://stuk.github.io/jszip/), [jsmediatags](https://github.com/aadsm/jsmediatags), and [iro](https://iro.js.org/) libraries.
