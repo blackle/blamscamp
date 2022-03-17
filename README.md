@@ -28,13 +28,7 @@ bandcamp is great (at time of writing,) but it would be great to have more optio
 
 ## serving
 
-The following files are needed to host the blamscamp editor:
-
-- index.html
-- template.html
-- jszip.min.js
-- jsmediatags.min.js
-- iro.min.js
+To host the blamscamp editor, all you need are the files in the "src" directory.
 
 To host the blamscamp player, all you need are the files provided in the exported zip.
 
