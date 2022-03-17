@@ -14,6 +14,8 @@ bandcamp is great (at time of writing,) but it would be great to have more optio
 
 [Youtube tutorial here](https://www.youtube.com/watch?v=fE6G0zSec1E)
 
+[Collection of Blamscamp albums on itch.io](https://itch.io/c/2306643/blamscamp-albums)
+
 ## roadmap
 
 - [x] reimport exported zip files for editing
