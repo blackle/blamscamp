@@ -115,7 +115,9 @@
                 key = field.getAttribute('data-stored-key'),
                 value = scope ? data[scope][key] : data[key];
           if (isCheckable(field)) {
-            field.checked = value || field.checked;
+            if (typeof value != "undefined") {
+              field.checked = value;
+            }
           } else {
             field.value = value || field.value;
           }
