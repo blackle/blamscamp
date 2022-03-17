@@ -30,6 +30,9 @@
             <div><input class="color_picker" type="text" value="#ffffff" data-stored-scope="settings" data-stored-key="background_color"/> background</div>
             <div><input class="color_picker" type="text" value="#000000" data-stored-scope="settings" data-stored-key="foreground_color"/> foreground</div>
             <div><input class="color_picker" type="text" value="#000000" data-stored-scope="settings" data-stored-key="highlight_color"/> highlight</div>
+            <div><input class="color_picker" type="text" value="#ffffff" data-stored-scope="settings" data-stored-key="button_color"/> button</div>
+            <div><input class="color_picker" type="text" value="#000000" data-stored-scope="settings" data-stored-key="icon_color"/> icon</div>
+            <div><input class="color_picker" type="text" value="#666666" data-stored-scope="settings" data-stored-key="border_color"/> border/shadow</div>
           </div>
         </div>
         <div><label>
@@ -63,7 +66,7 @@
       <iframe src="about:blank"></iframe>
     </div>
     <script>
-      const VERSION = "0.0.1";
+      const VERSION = "0.0.2";
 
       const $ = selector => document.querySelector(selector),
             $$ = selector => document.querySelectorAll(selector);
@@ -105,16 +108,18 @@
           }
         }
       };
+
       const update_fields = (data) => {
         for (const field of $$("[data-stored-key]")) {
           const scope = field.getAttribute('data-stored-scope'),
                 key = field.getAttribute('data-stored-key'),
                 value = scope ? data[scope][key] : data[key];
           if (isCheckable(field)) {
-            field.checked = value || false;
+            field.checked = value || field.checked;
           } else {
-            field.value = value || '';
+            field.value = value || field.value;
           }
+          if (field.oninput) field.oninput(field.value)
         }
       };
 
@@ -139,18 +144,25 @@
       const export_spinner = $("#export_spinner");
       const import_spinner = $("#import_spinner");
 
-
       const color_pickers = $$('.color_picker');
       const iro_obj = new iro.ColorPicker('#iro', {
         width: 150, layoutDirection: "horizontal"
       });
+      $('#iro').addEventListener('mousedown', (ev) => {
+        ev.preventDefault();
+      });
 
       for (let color_picker of color_pickers) {
+        color_picker.oninput = e => {
+          const value = color_picker.value;
+          color_picker.style.backgroundImage = "linear-gradient("+value+", "+value+")";
+        }
         function on_color_change(color) {
           const hex = color.hexString || color;
           color_picker.value = hex;
+          color_picker.oninput();
           //silly way of getting the little swatch next to the input element
-          color_picker.style.backgroundImage = "linear-gradient("+hex+", "+hex+")";
+          // color_picker.style.backgroundImage = "linear-gradient("+hex+", "+hex+")";
           //todo: auto-update CSS
         }
         color_picker.onfocus = e => {
@@ -387,14 +399,6 @@
         make_preview();
       };
 
-      function get_hex_brightness(hex) {
-        hex = hex.slice(1);
-        const r = parseInt(hex.substring(0, 2), 16) / 255,
-              g = parseInt(hex.substring(2, 4), 16) / 255,
-              b = parseInt(hex.substring(4, 6), 16) / 255;
-        return 0.2126*r + 0.7152*g + 0.0722*b;
-      };
-
       let template, template_song, template_body;
       fetch('template.html', {method: 'GET'})
       .then(response => response.text())
@@ -416,8 +420,7 @@
           artist: data.artist,
           cover: data.cover,
           songs: songs.join("\n"),
-          ...data.settings,
-          dark_highlight: get_hex_brightness(data.settings.highlight_color) < 0.5
+          ...data.settings
         };
         if (!final) {
           templateVars.theme_transparent = false;
@@ -569,7 +572,10 @@ button:hover {
 
 .color_pickers {
   flex-grow: 1;
-  margin-left: 20px;
+}
+
+#iro {
+  padding-right: 20px;
 }
 
 .color_picker {

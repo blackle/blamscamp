@@ -46,7 +46,7 @@
           </p> <i>– <:time:></i></li>
           <:song_end:>
       </ul>
-      <p class="madewith">made with <a href="https://suricrasia.online/blamscamp/">blamscamp</a></p>
+      <p class="madewith">made with <a href="https://suricrasia.online/blamscamp/">blamscamp v<:blamscamp_version:></a></p>
     </div>
     <:if:cover:>
     <div class="column_right">
@@ -190,10 +190,10 @@ li, .player {
 }
 
 button {
-  background-color: <:highlight_color:>;
+  background-color: <:button_color:>;
+  color: <:icon_color:>;
   <:if:theme_borders:>
-    border: 1px solid <:highlight_color:>;
-    background-image: linear-gradient(to bottom, #fff4, #fff4);
+    border: 1px solid <:border_color:>;
   <:else:theme_borders:>
     border: 0;
   <:endif:theme_borders:>
@@ -201,11 +201,6 @@ button {
   vertical-align: middle;
   cursor: pointer;
   box-sizing: border-box;
-  <:if:dark_highlight:>
-    color: #fff;
-  <:else:dark_highlight:>
-    color: #000;
-  <:endif:dark_highlight:>
   line-height: 0;
   <:if:theme_round:>
     border-radius: 100rem;
@@ -215,7 +210,7 @@ button {
     padding: 0.3em;
   <:endif:theme_round:>
   <:if:theme_shadows:>
-    box-shadow: 0 0.25em 0.5em -0.1em <:highlight_color:>66;
+    box-shadow: 0 0.25em 0.5em -0.1em <:border_color:>66;
   <:endif:theme_shadows:>
 }
 button span {
@@ -282,13 +277,13 @@ h1, h2, h3, .player {
   width: 100%;
   height: 10px;
   box-sizing: border-box;
-  background: <:foreground_color:>66;
+  background-color: <:button_color:>aa;
+  background-image: linear-gradient(#0001, #0001);
   outline: none;
-  opacity: 0.7;
   -webkit-transition: .2s;
   transition: opacity .2s;
   <:if:theme_borders:>
-    border: 1px solid <:foreground_color:>cc;
+    border: 1px solid <:border_color:>;
   <:else:theme_borders:>
     border: 0;
   <:endif:theme_borders:>
@@ -297,9 +292,6 @@ h1, h2, h3, .player {
   <:else:theme_round:>
     border-radius: 0;
   <:endif:theme_round:>
-}
-.slider:hover {
-  opacity: 1;
 }
 
 /* if we merge the slider-thumb styles, it breaks chrome support :c */
@@ -309,11 +301,10 @@ h1, h2, h3, .player {
   height: 15px;
   box-sizing: border-box;
   cursor: pointer;
-  background: <:highlight_color:>;
+  background: <:button_color:>;
   border-radius: 0;
   <:if:theme_borders:>
-    border: 1px solid <:highlight_color:>;
-    background-image: linear-gradient(to bottom, #fff4, #fff4);
+    border: 1px solid <:border_color:>;
   <:else:theme_borders:>
     border: 0;
   <:endif:theme_borders:>
@@ -323,7 +314,7 @@ h1, h2, h3, .player {
     border-radius: 0;
   <:endif:theme_round:>
   <:if:theme_shadows:>
-    box-shadow: 0 0.25em 0.5em -0.1em <:highlight_color:>66;
+    box-shadow: 0 0.25em 0.5em -0.1em <:border_color:>66;
   <:endif:theme_shadows:>
 }
 
@@ -332,10 +323,10 @@ h1, h2, h3, .player {
   height: 15px;
   box-sizing: border-box;
   cursor: pointer;
-  background: <:highlight_color:>;
+  background: <:button_color:>;
   border-radius: 0;
   <:if:theme_borders:>
-    border: 1px solid <:highlight_color:>;
+    border: 1px solid <:border_color:>;
     background-image: linear-gradient(to bottom, #fff4, #fff4);
   <:else:theme_borders:>
     border: 0;
@@ -346,7 +337,7 @@ h1, h2, h3, .player {
     border-radius: 0;
   <:endif:theme_round:>
   <:if:theme_shadows:>
-    box-shadow: 0 0.25em 0.5em -0.1em <:highlight_color:>66;
+    box-shadow: 0 0.25em 0.5em -0.1em <:border_color:>66;
   <:endif:theme_shadows:>
 }
 .madewith, .madewith a {
