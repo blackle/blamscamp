@@ -8,6 +8,10 @@
     <meta name="generator" content="blamscamp player <:blamscamp_version:>" />
   </head>
   <body>
+    <svg style="display: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24">
+      <symbol id="icon_play" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></symbol>
+      <symbol id="icon_pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></symbol>
+    </svg>
     <div class="column_left">
       <:if:album:>
       <h1><span class="album"><:album:></span></h1>
@@ -16,7 +20,11 @@
       <h3>by <span class="artist"><:artist:></span></h3>
       <:endif:artist:>
       <div class="player">
-        <button class="play paused"> </button>
+        <button class="play paused">
+          <svg class="icon">
+            <use xlink:href="#icon_play"/>
+          </svg>
+        </button>
         <div class="player_tools">
           <p class="title"></p>
           <input type="range" min="0" max="1000" value="0" class="slider">
@@ -35,7 +43,7 @@
               Track №<:index:>
             <:endif:title:>
             </span>
-          </p> <i>- <:time:></i></li>
+          </p> <i>– <:time:></i></li>
           <:song_end:>
       </ul>
       <p class="madewith">made with <a href="https://suricrasia.online/blamscamp/">blamscamp</a></p>
@@ -46,9 +54,13 @@
     </div>
     <:endif:cover:>
     <script>
+      function make_button(icon) {
+        return `<svg class="icon"><use xlink:href="#icon_${icon}"/></svg>`;
+      }
       function set_button_state(button, playing) {
         button.classList.add(playing ? "playing" : "paused");
         button.classList.remove(playing ? "paused" : "playing");
+        button.innerHTML = make_button(playing ? "pause" : "play");
       }
       const audio = new Audio();
       const slider = document.querySelector(".slider");
@@ -59,8 +71,10 @@
       let slider_locked = false;
       function reset_player() {
         last_played = -1;
-        player_title.textContent = play_buttons[0].parentElement.querySelector(".title").textContent;
-        audio.src = play_buttons[0].dataset.song;
+        if (play_buttons.length ) {
+            player_title.textContent = play_buttons[0].parentElement.querySelector(".title").textContent;
+            audio.src = play_buttons[0].dataset.song;
+        }
         window.setTimeout(() => slider.value = 0, 0);
       }
       reset_player();
@@ -131,12 +145,17 @@
           set_button_state(e, true);
           set_button_state(big_button, true);
         };
+        set_button_state(e, false);
       });
     </script>
     <style type="text/css">
 body {
   font-family: sans-serif;
-  background: <:background_color:>;
+  <:if:theme_transparent:>
+    background: transparent;
+  <:else:theme_transparent:>
+    background: <:background_color:>;
+  <:endif:theme_transparent:>
   color: <:foreground_color:>;
   display: flex;
   flex-flow: row nowrap;
@@ -170,27 +189,62 @@ li, .player {
   align-items: center;
 }
 
-.song_list button.play, .player button.play {
-  overflow: hidden;
-  margin: 5px;
-  border-radius: 0px;
-  border: 1px solid grey;
-  background-color: white;
+button {
+  background-color: <:highlight_color:>;
+  <:if:theme_borders:>
+    border: 1px solid <:highlight_color:>;
+    background-image: linear-gradient(to bottom, #fff4, #fff4);
+  <:else:theme_borders:>
+    border: 0;
+  <:endif:theme_borders:>
   text-align: center;
   vertical-align: middle;
-  padding: 0;
   cursor: pointer;
-  flex-shrink: 0;
+  box-sizing: border-box;
+  <:if:dark_highlight:>
+    color: #fff;
+  <:else:dark_highlight:>
+    color: #000;
+  <:endif:dark_highlight:>
+  padding: 0.5em;
+  line-height: 0;
+  <:if:theme_round:>
+    border-radius: 100rem;
+  <:else:theme_round:>
+    border-radius: 0;
+  <:endif:theme_round:>
+  <:if:theme_shadows:>
+    box-shadow: 0 0.25em 0.5em -0.1em <:highlight_color:>66;
+  <:endif:theme_shadows:>
+}
+button span {
+  line-height: 1.5;
 }
 
-.song_list button.play {
-  width: 20px;
-  height: 20px;
+.icon {
+  <:if:theme_filled_icons:>
+    fill: currentColor;
+    stroke: 0;
+  <:else:theme_filled_icons:>
+    fill: none;
+    stroke: currentColor;
+  <:endif:theme_filled_icons:>
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  width: 1.25em;
+  height: 1.25em;
+  vertical-align: middle;
 }
 
 .player button.play {
-  width: 50px;
-  height: 50px;
+  font-size: 2em;
+}
+
+.song_list button.play, .player button.play {
+  overflow: hidden;
+  margin: 5px;
+  flex-shrink: 0;
 }
 
 .player_tools {
@@ -200,8 +254,9 @@ li, .player {
   padding: 0px 10px;
 }
 
-.player_tools p {
-  margin: 5px 2px;
+.player .title {
+  font-size: 125%;
+  margin: 0 0 0.5em;
 }
 
 .song_list {
@@ -213,7 +268,7 @@ li, .player {
     margin: 0 5px;
 }
 
-.song_list i, .album, .artist, .title {
+.album, .artist, .title {
   color: <:highlight_color:>;
 }
 
@@ -225,48 +280,48 @@ h1, h2, h3, .player {
   -webkit-appearance: none;
   width: 100%;
   height: 10px;
-  border: 1px solid grey;
-  background: #eee;
+  box-sizing: border-box;
+  background: <:foreground_color:>66;
   outline: none;
   opacity: 0.7;
   -webkit-transition: .2s;
   transition: opacity .2s;
+  <:if:theme_borders:>
+    border: 1px solid <:foreground_color:>cc;
+  <:else:theme_borders:>
+    border: 0;
+  <:endif:theme_borders:>
+  <:if:theme_round:>
+    border-radius: 100rem;
+  <:else:theme_round:>
+    border-radius: 0;
+  <:endif:theme_round:>
 }
-
 .slider:hover {
   opacity: 1;
 }
 
-.slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
+.slider::-webkit-slider-thumb, .slider::-moz-range-thumb {
   width: 30px;
   height: 15px;
-  background: white;
-  border: 1px solid grey;
+  box-sizing: border-box;
   cursor: pointer;
+  background: <:highlight_color:>;
   border-radius: 0;
-}
-
-.slider::-moz-range-thumb {
-  width: 30px;
-  height: 15px;
-  background: white;
-  border: 1px solid grey;
-  cursor: pointer;
-  border-radius: 0;
-}
-
-button.playing {
-  background-size: contain;
-  background-position: center;
-  background-image: url('data:image/svg+xml,%3Csvg%20width%3D%22100mm%22%20height%3D%22100mm%22%20viewBox%3D%220%200%20100%20100%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill%3D%22%23000%22%20d%3D%22M55.29%2019.29h16.63v61.42H55.29zm-27.21%200h16.63v61.42H28.08z%22%2F%3E%3C%2Fsvg%3E');
-}
-
-button.paused {
-  background-size: contain;
-  background-position: center;
-  background-image: url('data:image/svg+xml,%3Csvg%20width%3D%22100mm%22%20height%3D%22100mm%22%20viewBox%3D%220%200%20100%20100%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill%3D%22%23000%22%20d%3D%22M23%2020v61l54-30z%22%2F%3E%3C%2Fsvg%3E');
+  <:if:theme_borders:>
+    border: 1px solid <:highlight_color:>;
+    background-image: linear-gradient(to bottom, #fff4, #fff4);
+  <:else:theme_borders:>
+    border: 0;
+  <:endif:theme_borders:>
+  <:if:theme_round:>
+    border-radius: 100rem;
+  <:else:theme_round:>
+    border-radius: 0;
+  <:endif:theme_round:>
+  <:if:theme_shadows:>
+    box-shadow: 0 0.25em 0.5em -0.1em <:highlight_color:>66;
+  <:endif:theme_shadows:>
 }
 .madewith, .madewith a {
   color: <:foreground_color:>;
@@ -276,6 +331,8 @@ button.paused {
   font-size: 70%;
   opacity: .5;
 }
+
+<:theme_css:>
     </style>
   </body>
 </html>

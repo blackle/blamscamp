@@ -26,6 +26,26 @@
         <div><input type="color" value="#ffffff" data-stored-scope="settings" data-stored-key="background_color"/> background</div>
         <div><input type="color" value="#000000" data-stored-scope="settings" data-stored-key="foreground_color"/> foreground</div>
         <div><input type="color" value="#000000" data-stored-scope="settings" data-stored-key="highlight_color"/> highlight</div>
+        <div><label>
+          <input type="checkbox" data-stored-scope="settings" data-stored-key="theme_round" /> round theme
+        </label></div>
+        <div><label>
+          <input type="checkbox" data-stored-scope="settings" data-stored-key="theme_filled_icons" /> filled icons
+        </label></div>
+        <div><label>
+          <input type="checkbox" data-stored-scope="settings" data-stored-key="theme_shadows" /> shadow/glow effects
+        </label></div>
+        <div><label>
+          <input type="checkbox" data-stored-scope="settings" data-stored-key="theme_borders" /> borders
+        </label></div>
+        <div><label>
+          <input type="checkbox" data-stored-scope="settings" data-stored-key="theme_transparent" /> leave background transparent in the exports
+        </label></div>
+
+        <details class="well">
+          <summary>custom css</summary>
+          <textarea class="code_editor" data-stored-scope="settings" data-stored-key="theme_css"></textarea>
+        </details>
 
         <button type="button" id="generate">generate</button>
         <button type="button" id="export">export zip</button> <div id="export_spinner" class="spinner hidden"></div>
@@ -85,9 +105,9 @@
                 key = field.getAttribute('data-stored-key'),
                 value = scope ? data[scope][key] : data[key];
           if (isCheckable(field)) {
-            field.checked = value;
+            field.checked = value || false;
           } else {
-            field.value = value;
+            field.value = value || '';
           }
         }
       };
@@ -335,6 +355,14 @@
         make_preview();
       };
 
+      function get_hex_brightness(hex) {
+        hex = hex.slice(1);
+        const r = parseInt(hex.substring(0, 2), 16) / 255,
+              g = parseInt(hex.substring(2, 4), 16) / 255,
+              b = parseInt(hex.substring(4, 6), 16) / 255;
+        return 0.2126*r + 0.7152*g + 0.0722*b;
+      };
+
       let template, template_song, template_body;
       fetch('template.html', {method: 'GET'})
       .then(response => response.text())
@@ -344,20 +372,25 @@
         template_body = template.replace(/<:song_start:>(?:[\s\S]*)<:song_end:>/, "<:songs:>");
       })
       .catch(error => console.error('error:', error));
-      function generate(data) {
+      function generate(data, final) {
         let out = template_body;
         let songs = data.songs.map((song, idx) => applyVarsToTemplate(template_song, {
           index: idx + 1,
           ...song
         }));
-        out = applyVarsToTemplate(out, {
+        const templateVars = {
           blamscamp_version: data.blamscamp_version,
           album: data.album,
           artist: data.artist,
           cover: data.cover,
           songs: songs.join("\n"),
-          ...data.settings
-        });
+          ...data.settings,
+          dark_highlight: get_hex_brightness(data.settings.highlight_color) < 0.5
+        };
+        if (!final) {
+          templateVars.theme_transparent = false;
+        }
+        out = applyVarsToTemplate(out, templateVars);
         return out;
       }
       export_button.onclick = async (e) => {
@@ -366,7 +399,7 @@
         const data = await serialize(true);
         let zip = new JSZip();
         zip.file('blamscamp.json', JSON.stringify(data));
-        zip.file('index.html', generate(data));
+        zip.file('index.html', generate(data, true));
         for (const song of songs_datastore) {
           zip.file(song.filename, song.file);
         }
@@ -384,7 +417,7 @@
       };
       const make_preview = async () => {
         const data = await serialize(false);
-        $("iframe").srcdoc = generate(data);
+        $("iframe").srcdoc = generate(data, false);
       };
       $("#generate").onclick = () => {
         make_preview();
@@ -464,6 +497,17 @@ input {
 }
 input[type='color'] {
   margin: 5px 0;
+}
+
+.code_editor {
+  padding: 0.5rem 1rem;
+  font-family: monospace;
+  width: 100%;
+  box-sizing: border-box;
+  line-height: 1.5;
+  margin: 0;
+  resize: vertical;
+  min-height: 15em;
 }
 
 button {
