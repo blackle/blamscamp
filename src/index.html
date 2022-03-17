@@ -27,25 +27,25 @@
         <div class="color_area">
           <div class="disabled" id="iro"></div>
           <div class="color_pickers">
-            <div><input class="color_picker" type="text" value="#ffffff" data-stored-scope="settings" data-stored-key="background_color"/> background</div>
-            <div><input class="color_picker" type="text" value="#000000" data-stored-scope="settings" data-stored-key="foreground_color"/> foreground</div>
-            <div><input class="color_picker" type="text" value="#000000" data-stored-scope="settings" data-stored-key="highlight_color"/> highlight</div>
-            <div><input class="color_picker" type="text" value="#ffffff" data-stored-scope="settings" data-stored-key="button_color"/> button</div>
-            <div><input class="color_picker" type="text" value="#000000" data-stored-scope="settings" data-stored-key="icon_color"/> icon</div>
-            <div><input class="color_picker" type="text" value="#666666" data-stored-scope="settings" data-stored-key="border_color"/> border/shadow</div>
+            <div><input class="color_picker" type="text" data-default="#ffffff" data-stored-scope="settings" data-stored-key="background_color"/> background</div>
+            <div><input class="color_picker" type="text" data-default="#000000" data-stored-scope="settings" data-stored-key="foreground_color"/> foreground</div>
+            <div><input class="color_picker" type="text" data-default="#000000" data-stored-scope="settings" data-stored-key="highlight_color"/> highlight</div>
+            <div><input class="color_picker" type="text" data-default="#ffffff" data-stored-scope="settings" data-stored-key="button_color"/> button</div>
+            <div><input class="color_picker" type="text" data-default="#000000" data-stored-scope="settings" data-stored-key="icon_color"/> icon</div>
+            <div><input class="color_picker" type="text" data-default="#666666" data-stored-scope="settings" data-stored-key="border_color"/> border/shadow</div>
           </div>
         </div>
         <div><label>
           <input type="checkbox" data-stored-scope="settings" data-stored-key="theme_round" /> round theme
         </label></div>
         <div><label>
-          <input type="checkbox" data-stored-scope="settings" data-stored-key="theme_filled_icons" checked /> filled icons
+          <input type="checkbox" data-stored-scope="settings" data-stored-key="theme_filled_icons" data-default="checked" /> filled icons
         </label></div>
         <div><label>
           <input type="checkbox" data-stored-scope="settings" data-stored-key="theme_shadows" /> shadow/glow effects
         </label></div>
         <div><label>
-          <input type="checkbox" data-stored-scope="settings" data-stored-key="theme_borders" checked /> borders
+          <input type="checkbox" data-stored-scope="settings" data-stored-key="theme_borders" data-default="checked" /> borders
         </label></div>
         <div><label>
           <input type="checkbox" data-stored-scope="settings" data-stored-key="theme_transparent" /> leave background transparent in the exports
@@ -114,18 +114,23 @@
       const update_fields = (data) => {
         for (const field of $$("[data-stored-key]")) {
           const scope = field.getAttribute('data-stored-scope'),
-                key = field.getAttribute('data-stored-key'),
-                value = scope ? data[scope][key] : data[key];
+                key = field.getAttribute('data-stored-key');
+          let value = undefined;
+          try { value = scope ? data[scope][key] : data[key] } catch {}
+
           if (isCheckable(field)) {
             if (typeof value != "undefined") {
-              field.checked = value;
+              field.checked = value || false;
+            } else {
+              field.checked = field.dataset.default || false;
             }
           } else {
-            field.value = value || field.value;
+            field.value = value || field.dataset.default || '';
           }
           if (field.oninput) field.oninput(field.value)
         }
       };
+      update_fields({}); //fill with defaults
 
       const ifHTMLMatcher = (varName) => new RegExp(`<:if:${varName}:>([\\s\\S]*?)(?:<:else:${varName}:>([\\s\\S]*?))?<:endif:${varName}:>`, "g");
       const brokenIfHTMLMatcher = /<:if:(\S+):>[\s\S]*?(?:<:else:\1:>([\s\S]*?))?<:endif:\1:>/g
