@@ -11,7 +11,7 @@
   </head>
   <body>
     <div class="editor">
-      <h1>blamscamp editor</h1>
+      <h1>blamscamp editor <span id="version"></span></h1>
       <p>create a bandcamp-style audio player for selling albums on itch.io. <a href="https://github.com/blackle/blamscamp/blob/main/GUIDE.md">(guide)</a> <a href="https://www.youtube.com/watch?v=fE6G0zSec1E">(youtube)</a> <a href="https://github.com/blackle/blamscamp">(github)</a></p>
       <form id="editor">
         <div><input class="meta_fields" type="text" placeholder="album title" data-stored-key="album"/></div>
@@ -70,6 +70,8 @@
 
       const $ = selector => document.querySelector(selector),
             $$ = selector => document.querySelectorAll(selector);
+
+      $("#version").textContent = "v" + VERSION;
       /**
        * Adds an event listener that triggers only if it was called on a specific child element, or its grandchildren.
        * Suitable child elements are tested against a CSS selector.
@@ -628,6 +630,11 @@ button:hover {
 .disabled {
   opacity: .5;
   pointer-events: none;
+}
+
+#version {
+  font-size: 60%;
+  opacity: .6;
 }
 
 @keyframes spin {
