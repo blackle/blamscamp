@@ -206,12 +206,13 @@ button {
   <:else:dark_highlight:>
     color: #000;
   <:endif:dark_highlight:>
-  padding: 0.5em;
   line-height: 0;
   <:if:theme_round:>
     border-radius: 100rem;
+    padding: 0.5em;
   <:else:theme_round:>
     border-radius: 0;
+    padding: 0.3em;
   <:endif:theme_round:>
   <:if:theme_shadows:>
     box-shadow: 0 0.25em 0.5em -0.1em <:highlight_color:>66;
@@ -301,7 +302,32 @@ h1, h2, h3, .player {
   opacity: 1;
 }
 
-.slider::-webkit-slider-thumb, .slider::-moz-range-thumb {
+/* if we merge the slider-thumb styles, it breaks chrome support :c */
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 30px;
+  height: 15px;
+  box-sizing: border-box;
+  cursor: pointer;
+  background: <:highlight_color:>;
+  border-radius: 0;
+  <:if:theme_borders:>
+    border: 1px solid <:highlight_color:>;
+    background-image: linear-gradient(to bottom, #fff4, #fff4);
+  <:else:theme_borders:>
+    border: 0;
+  <:endif:theme_borders:>
+  <:if:theme_round:>
+    border-radius: 100rem;
+  <:else:theme_round:>
+    border-radius: 0;
+  <:endif:theme_round:>
+  <:if:theme_shadows:>
+    box-shadow: 0 0.25em 0.5em -0.1em <:highlight_color:>66;
+  <:endif:theme_shadows:>
+}
+
+.slider::-moz-range-thumb {
   width: 30px;
   height: 15px;
   box-sizing: border-box;
