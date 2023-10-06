@@ -112,6 +112,19 @@
           slider.value = (audio.currentTime / audio.duration) * 1000;
         }
       };
+      audio.oncanplaythrough = () => {
+        // In case audio duration is broken on load, force it to update
+        if (!isFinite(audio.duration)) {
+          const time = audio.currentTime;
+          audio.currentTime = 999999999;
+          setTimeout(() => {
+            audio.currentTime = time;
+            if (!isFinite(audio.duration)) {
+              audio.oncanplaythrough();
+            }
+          }, 1000);
+        }
+      }
       big_button.onclick = (event) => {
         if (last_played == -1) {
           play_buttons[0].onclick();
