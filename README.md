@@ -28,7 +28,7 @@ bandcamp is great (at time of writing,) but it would be great to have more optio
 - [ ] auto-updating of the generated player
 - [ ] improve mobile support on itch.io. ostensibly only unity games are allowed to have dynamic sizing.
 - [x] allow remembering position
-- [ ] allow setting playback rate
+- [x] allow setting playback rate
 
 ## serving
 

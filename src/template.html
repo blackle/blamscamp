@@ -28,6 +28,12 @@
         <div class="player_tools">
           <p class="title"></p>
           <input type="range" min="0" max="1000" value="0" class="slider">
+          <:if:playback_rate:>
+          <label style="text-align:right;margin-top:5px;font-size:10pt;">
+            <span>Speed &times;1</span>
+            <input id="playback_rate" type="range" min="0.25" max="4" step="0.25" value="1" class="slider" style="max-width:150px;">
+          </label>
+          <:endif:playback_rate:>
         </div>
       </div>
       <ul class="song_list">
@@ -93,6 +99,9 @@
         if (last_played != -1) {
           set_button_state(play_buttons[last_played], true);
         }
+        <:if:playback_rate:>
+        audio.playbackRate = parseFloat(document.getElementById('playback_rate').value);
+        <:endif:playback_rate:>
       };
       audio.onpause = (event) => {
         set_button_state(big_button, false);
@@ -201,6 +210,16 @@
         localStorage.setItem(remember_key, JSON.stringify(position));
       }, 10000);
       <:endif:remember_position:>
+      <:if:playback_rate:>
+      const speed = document.getElementById('playback_rate');
+      audio.preservesPitch = true;
+      speed.oninput = (event) => {
+        speed.parentElement.querySelector('span').innerHTML = 'Speed &times;' + event.target.value;
+      };
+      speed.onchange = (event) => {
+        audio.playbackRate = parseFloat(event.target.value);
+      };
+      <:endif:playback_rate:>
     </script>
     <style type="text/css">
 body {
