@@ -213,11 +213,31 @@
       <:if:playback_rate:>
       const speed = document.getElementById('playback_rate');
       audio.preservesPitch = true;
+      function set_playback_rate(value) {
+        audio.playbackRate = parseFloat(value);
+        <:if:remember_rate:>
+        localStorage.setItem(rate_key, value);
+        <:endif:remember_rate:>
+      }
+      function set_speed_text(value) {
+        speed.parentElement.querySelector('span').innerHTML = 'Speed &times;' + value;
+      }
+      <:if:remember_rate:>
+      const rate_key = 'playback_rate';
+      window.addEventListener('load', () => {
+        let rate = localStorage.getItem(rate_key) ?? null;
+        if (!rate) return;
+        speed.value = rate;
+        set_playback_rate(rate);
+        set_speed_text(rate);
+        console.log(speed.value);
+      }, { once: true });
+      <:endif:remember_rate:>
       speed.oninput = (event) => {
-        speed.parentElement.querySelector('span').innerHTML = 'Speed &times;' + event.target.value;
+        set_speed_text(event.target.value);
       };
       speed.onchange = (event) => {
-        audio.playbackRate = parseFloat(event.target.value);
+        set_playback_rate(event.target.value);
       };
       <:endif:playback_rate:>
     </script>
