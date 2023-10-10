@@ -10,6 +10,8 @@ Most of these fields are optional, so you can have an album with no cover and no
 
 You can set the background colour, foreground colour (font colour,) and highlight colour (colour for album name/artist name/song titles).
 
+You can add additional files to include in the resulting zip file. If you add images, you can use them in the "custom css," otherwise they're just loose in the zip file. Try not to have multiple files with the same file name.
+
 Click "generate" to see a live preview in the second pane.
 
 Click "export zip" to get a zip file that contains your player, music files, and cover image. This is what you upload to itch.io.

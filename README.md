@@ -23,7 +23,8 @@ bandcamp is great (at time of writing,) but it would be great to have more optio
 - [x] auto parsing of music title from ID3 tags
 - [ ] auto parsing of music order from ID3 tags
 - [x] custom css field
-- [ ] option to add additional files to the generated zip file (e.g. so one can set a background image through custom css)
+- [x] loading indicator
+- [x] option to add additional files to the generated zip file (e.g. so one can set a background image through custom css)
 - [ ] option to re-encode audio to lower bitrate
 - [ ] auto-updating of the generated player
 - [ ] improve mobile support on itch.io. ostensibly only unity games are allowed to have dynamic sizing.
