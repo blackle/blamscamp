@@ -11,6 +11,7 @@
     <svg style="display: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24">
       <symbol id="icon_play" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></symbol>
       <symbol id="icon_pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></symbol>
+      <symbol id="icon_load" viewBox="0 0 12 24"><circle cx="18" cy="12" r="8"></circle></symbol>
     </svg>
     <div class="column_left">
       <:if:album:>
@@ -20,9 +21,9 @@
       <h3>by <span class="artist"><:artist:></span></h3>
       <:endif:artist:>
       <div class="player">
-        <button class="play paused">
+        <button class="play loading">
           <svg class="icon">
-            <use xlink:href="#icon_play"/>
+            <use xlink:href="#icon_load"/>
           </svg>
         </button>
         <div class="player_tools">
@@ -58,9 +59,9 @@
         return `<svg class="icon"><use xlink:href="#icon_${icon}"/></svg>`;
       }
       function set_button_state(button, playing) {
-        button.classList.add(playing ? "playing" : "paused");
-        button.classList.remove(playing ? "paused" : "playing");
-        button.innerHTML = make_button(playing ? "pause" : "play");
+        button.classList.add(playing === null ? "loading" : (playing ? "playing" : "paused"));
+        button.classList.remove(...(playing === null ? ["playing", "paused"] : (playing ? ["paused", "loading"] : ["playing", "loading"])));
+        button.innerHTML = make_button(playing === null ? "load" : (playing ? "pause" : "play"));
       }
       const audio = new Audio();
       const slider = document.querySelector(".slider");
@@ -88,6 +89,13 @@
         audio.currentTime = time;
         slider_locked = false;
       };
+      audio.onloadstart = (event) => {
+        audio.loaded = false;
+        set_button_state(big_button, null);
+        if (last_played != -1) {
+          set_button_state(play_buttons[last_played], null);
+        }
+      };
       audio.onplay = (event) => {
         set_button_state(big_button, true);
         if (last_played != -1) {
@@ -112,6 +120,26 @@
           slider.value = (audio.currentTime / audio.duration) * 1000;
         }
       };
+      audio.oncanplaythrough = () => {
+        if (audio.loaded == false) {
+          set_button_state(big_button, audio.playing);
+          if (last_played != -1) {
+            set_button_state(play_buttons[last_played], audio.playing);
+          }
+          audio.loaded = true;
+        }
+        // In case audio duration is broken on load, force it to update
+        if (!isFinite(audio.duration)) {
+          const time = audio.currentTime;
+          audio.currentTime = 999999999;
+          setTimeout(() => {
+            audio.currentTime = time;
+            if (!isFinite(audio.duration)) {
+              audio.oncanplaythrough();
+            }
+          }, 1000);
+        }
+      }
       big_button.onclick = (event) => {
         if (last_played == -1) {
           play_buttons[0].onclick();
@@ -215,6 +243,17 @@ button {
 }
 button span {
   line-height: 1.5;
+}
+@keyframes rotating {
+  from {
+    transform: translateX(-50%) rotate(0deg);
+  }
+  to {
+    transform: translateX(-50%) rotate(360deg);
+  }
+}
+button.loading .icon {
+  animation: rotating 2s linear infinite;
 }
 
 .icon {

@@ -25,6 +25,12 @@ const delegate = (root, selector, event, callback) => {
   });
 };
 
+for (const field of $$("[data-stored-key]")) {
+  field.onchange = () => {
+    make_preview();
+  }
+}
+
 let common_datastore = {};
 const isCheckable = tag => tag.type === 'checkbox' || tag.type === 'radio';
 const gather_fields = () => {
@@ -116,6 +122,7 @@ for (let color_picker of color_pickers) {
   color_picker.onblur = e => {
     iro_obj.el.classList.add("disabled");
     iro_obj.off("color:change", on_color_change);
+    make_preview();
   };
   on_color_change(color_picker.value);
 }
@@ -187,16 +194,24 @@ async function add_song(file) {
   }
 
   song.time = await get_audio_duration(song.url);
+  song.track = songs_datastore.length + 1;
   try {
     const { tags } = await get_file_tags(file)
-    if (tags && tags.title != null) {
+    if (tags?.title ?? false) {
       song.title = tags.title;
+    }
+    if (tags?.track ?? false) {
+      song.track = tags.track;
     }
   } catch (err) {
     console.error('failed to read tags from: ' + file.name, err);
   }
 
   songs_datastore.push(song);
+  songs_datastore.sort((a, b) => {
+    if (a.track === b.track) return 0;
+    return a.track < b.track ? -1 : 0;
+  });
   return song;
 };
 const add_song_button = $("#add_song_button");
@@ -219,6 +234,7 @@ delegate(songs_list, '.song_remove', 'click', function (e) {
   const idx = Number(this.closest('.song').getAttribute('data-song-idx'));
   songs_datastore.splice(idx, 1);
   songs_rerender();
+  make_preview();
 });
 let current_sound;
 delegate(songs_list, '.song_set', 'click',function () {
@@ -234,6 +250,7 @@ change_song_input.onchange = async () => {
   current_sound = void 0;
   change_song_input.value = '';
   songs_rerender();
+  make_preview();
 };
 delegate(songs_list, '.song_title', 'change', function() {
   const idx = Number(this.closest('.song').getAttribute('data-song-idx'));
@@ -241,13 +258,19 @@ delegate(songs_list, '.song_title', 'change', function() {
 });
 delegate(songs_list, '.song_up', 'click',function () {
   const idx = Number(this.closest('.song').getAttribute('data-song-idx'));
+  songs_datastore[idx].track = Math.min(1, idx);
+  songs_datastore[idx - 1].track = Math.max(songs_datastore.length, idx + 1);
   [songs_datastore[idx], songs_datastore[idx - 1]] = [songs_datastore[idx - 1], songs_datastore[idx]];
   songs_rerender();
+  make_preview();
 });
 delegate(songs_list, '.song_down', 'click',function () {
   const idx = Number(this.closest('.song').getAttribute('data-song-idx'));
+  songs_datastore[idx].track = Math.max(songs_datastore.length, idx + 1);
+  songs_datastore[idx + 1].track = Math.min(1, idx);
   [songs_datastore[idx], songs_datastore[idx + 1]] = [songs_datastore[idx + 1], songs_datastore[idx]];
   songs_rerender();
+  make_preview();
 });
 
 
