@@ -25,6 +25,12 @@ const delegate = (root, selector, event, callback) => {
   });
 };
 
+for (const field of $$("[data-stored-key]")) {
+  field.onchange = () => {
+    make_preview();
+  }
+}
+
 let common_datastore = {};
 const isCheckable = tag => tag.type === 'checkbox' || tag.type === 'radio';
 const gather_fields = () => {
@@ -116,6 +122,7 @@ for (let color_picker of color_pickers) {
   color_picker.onblur = e => {
     iro_obj.el.classList.add("disabled");
     iro_obj.off("color:change", on_color_change);
+    make_preview();
   };
   on_color_change(color_picker.value);
 }
@@ -227,6 +234,7 @@ delegate(songs_list, '.song_remove', 'click', function (e) {
   const idx = Number(this.closest('.song').getAttribute('data-song-idx'));
   songs_datastore.splice(idx, 1);
   songs_rerender();
+  make_preview();
 });
 let current_sound;
 delegate(songs_list, '.song_set', 'click',function () {
@@ -242,6 +250,7 @@ change_song_input.onchange = async () => {
   current_sound = void 0;
   change_song_input.value = '';
   songs_rerender();
+  make_preview();
 };
 delegate(songs_list, '.song_title', 'change', function() {
   const idx = Number(this.closest('.song').getAttribute('data-song-idx'));
@@ -253,6 +262,7 @@ delegate(songs_list, '.song_up', 'click',function () {
   songs_datastore[idx - 1].track = Math.max(songs_datastore.length, idx + 1);
   [songs_datastore[idx], songs_datastore[idx - 1]] = [songs_datastore[idx - 1], songs_datastore[idx]];
   songs_rerender();
+  make_preview();
 });
 delegate(songs_list, '.song_down', 'click',function () {
   const idx = Number(this.closest('.song').getAttribute('data-song-idx'));
@@ -260,6 +270,7 @@ delegate(songs_list, '.song_down', 'click',function () {
   songs_datastore[idx + 1].track = Math.min(1, idx);
   [songs_datastore[idx], songs_datastore[idx + 1]] = [songs_datastore[idx + 1], songs_datastore[idx]];
   songs_rerender();
+  make_preview();
 });
 
 
