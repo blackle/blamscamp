@@ -100,7 +100,7 @@
           set_button_state(play_buttons[last_played], true);
         }
         <:if:playback_rate:>
-        audio.playbackRate = parseFloat(document.getElementById('playback_rate').value);
+        audio.playbackRate = parseFloat(document.getElementById("playback_rate").value);
         <:endif:playback_rate:>
       };
       audio.onpause = (event) => {
@@ -157,13 +157,13 @@
         set_button_state(e, false);
       });
       <:if:remember_position:>
-        const remember_key = 'remembered';
-      window.addEventListener('load', () => {
+      const remember_key = "<:uuid:>_remembered";
+      window.addEventListener("load", () => {
         let last = localStorage.getItem(remember_key) ?? null;
         if (!last) return;
         last = JSON.parse(last);
         const buttons = Array.from(play_buttons);
-        let button_idx = buttons.findIndex(b => b.getAttribute('data-song') == last.file);
+        let button_idx = buttons.findIndex(b => b.getAttribute("data-song") == last.file);
         if (button_idx < 0) return;
         const click_and_set_time = (idx, time, changed = false) => {
           play_buttons[idx].onclick();
@@ -185,10 +185,10 @@
             audio.onloadeddata = null;
           };
         };
-        const player = document.querySelector('.player');
-        const continue_prompt = document.createElement('button');
-        continue_prompt.style = 'padding:10px 20px;lineHeight:13pt;fontSize:12pt;';
-        continue_prompt.innerText = 'Continue where you left off';
+        const player = document.querySelector(".player");
+        const continue_prompt = document.createElement("button");
+        continue_prompt.style = "padding:10px 20px;lineHeight:13pt;fontSize:12pt;";
+        continue_prompt.innerText = "Continue where you left off";
         continue_prompt.onclick = (event) => {
           click_and_set_time(button_idx, last.time - 10);
           event.target.remove();
@@ -198,7 +198,7 @@
       window.position_checker = setInterval(() => {
         if (last_played < 0) return;
         const playing = play_buttons[last_played];
-        const file = playing.getAttribute('data-song');
+        const file = playing.getAttribute("data-song");
         if (!file) return;
         const time = Math.round(audio.currentTime);
         let last = localStorage.getItem(remember_key) ?? null;
@@ -211,7 +211,7 @@
       }, 10000);
       <:endif:remember_position:>
       <:if:playback_rate:>
-      const speed = document.getElementById('playback_rate');
+      const speed = document.getElementById("playback_rate");
       audio.preservesPitch = true;
       function set_playback_rate(value) {
         audio.playbackRate = parseFloat(value);
@@ -220,11 +220,11 @@
         <:endif:remember_rate:>
       }
       function set_speed_text(value) {
-        speed.parentElement.querySelector('span').innerHTML = 'Speed &times;' + value;
+        speed.parentElement.querySelector("span").innerHTML = "Speed &times;" + value;
       }
       <:if:remember_rate:>
-      const rate_key = 'playback_rate';
-      window.addEventListener('load', () => {
+      const rate_key = "<:uuid:>_playback_rate";
+      window.addEventListener("load", () => {
         let rate = localStorage.getItem(rate_key) ?? null;
         if (!rate) return;
         speed.value = rate;
