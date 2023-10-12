@@ -162,3 +162,11 @@ button:hover {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+#add_extra_button, .code_editor {
+  margin-top: 5px;
+}
+
+summary {
+  cursor: pointer;
+}

@@ -510,6 +510,9 @@ function generate(data, final) {
   };
   if (!final) {
     templateVars.theme_transparent = false;
+    if (templateVars.remember_position) {
+      templateVars.force_show_remember_position = true;
+    }
   } else {
     // Generate a UUID for exports so localStorage can have a unique key
     // UUID generator from https://stackoverflow.com/a/2117523
