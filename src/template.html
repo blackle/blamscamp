@@ -30,10 +30,11 @@
           <p class="title"></p>
           <input type="range" min="0" max="1000" value="0" class="slider">
           <:if:playback_rate:>
-          <label style="text-align:right;margin-top:5px;font-size:10pt;">
-            <span>Speed &times;1</span>
+          <div class="playback_rate_controls">
+            <span>Speed</span>
             <input id="playback_rate" type="range" min="0.25" max="4" step="0.25" value="1" class="slider" style="max-width:150px;">
-          </label>
+            <span class="playback_rate_text">&times;1</span>
+          </div>
           <:endif:playback_rate:>
         </div>
       </div>
@@ -248,7 +249,7 @@
         <:endif:remember_rate:>
       }
       function set_speed_text(value) {
-        speed.parentElement.querySelector("span").innerHTML = "Speed &times;" + value;
+        speed.parentElement.querySelector(".playback_rate_text").innerHTML = "&times;" + value;
       }
       <:if:remember_rate:>
       const rate_key = "<:uuid:>_playback_rate";
@@ -479,6 +480,19 @@ h1, h2, h3, .player {
   color: <:foreground_color:>;
   font-size: 70%;
   opacity: .5;
+}
+.playback_rate_controls {
+  display: flex;
+  margin-top: 5px;
+  font-size: 10pt;
+  gap: 3px;
+  align-items: center;
+  justify-content: flex-end;
+}
+.playback_rate_text {
+  display: inline-block;
+  text-align: left;
+  width: 5ch;
 }
 
 <:theme_css:>

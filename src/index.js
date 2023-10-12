@@ -1,5 +1,5 @@
 
-const VERSION = "0.0.2";
+const VERSION = "0.0.3";
 
 const $ = selector => document.querySelector(selector),
       $$ = selector => document.querySelectorAll(selector);
