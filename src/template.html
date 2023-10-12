@@ -29,6 +29,12 @@
         <div class="player_tools">
           <p class="title"></p>
           <input type="range" min="0" max="1000" value="0" class="slider">
+          <:if:playback_rate:>
+          <label style="text-align:right;margin-top:5px;font-size:10pt;">
+            <span>Speed &times;1</span>
+            <input id="playback_rate" type="range" min="0.25" max="4" step="0.25" value="1" class="slider" style="max-width:150px;">
+          </label>
+          <:endif:playback_rate:>
         </div>
       </div>
       <ul class="song_list">
@@ -101,6 +107,9 @@
         if (last_played != -1) {
           set_button_state(play_buttons[last_played], true);
         }
+        <:if:playback_rate:>
+        audio.playbackRate = parseFloat(document.getElementById("playback_rate").value);
+        <:endif:playback_rate:>
       };
       audio.onpause = (event) => {
         set_button_state(big_button, false);
@@ -175,6 +184,90 @@
         };
         set_button_state(e, false);
       });
+      <:if:remember_position:>
+      const remember_key = "<:uuid:>_remembered";
+      window.addEventListener("load", () => {
+        let last = localStorage.getItem(remember_key) ?? null;
+        if (!last) return;
+        last = JSON.parse(last);
+        const buttons = Array.from(play_buttons);
+        let button_idx = buttons.findIndex(b => b.getAttribute("data-song") == last.file);
+        if (button_idx < 0) return;
+        const click_and_set_time = (idx, time, changed = false) => {
+          play_buttons[idx].onclick();
+          audio.onloadeddata = null;
+          audio.onloadeddata = (event) => {
+            if (time < 0) {
+              if (!changed) {
+                if (--idx < 0) {
+                  time = 0;
+                } else {
+                  return click_and_set_time(idx, time, true);
+                }
+              } else {
+                time = audio.duration + time;
+              }
+            }
+            audio.currentTime = Math.max(0, time);
+            audio.play();
+            audio.onloadeddata = null;
+          };
+        };
+        const player = document.querySelector(".player");
+        const continue_prompt = document.createElement("button");
+        continue_prompt.style = "padding:10px 20px;lineHeight:13pt;fontSize:12pt;";
+        continue_prompt.innerText = "Continue where you left off";
+        continue_prompt.onclick = (event) => {
+          click_and_set_time(button_idx, last.time - 10);
+          event.target.remove();
+        };
+        player.parentElement.insertBefore(continue_prompt, player);
+      }, { once: true });
+      window.position_checker = setInterval(() => {
+        if (last_played < 0) return;
+        const playing = play_buttons[last_played];
+        const file = playing.getAttribute("data-song");
+        if (!file) return;
+        const time = Math.round(audio.currentTime);
+        let last = localStorage.getItem(remember_key) ?? null;
+        if (last) {
+          last = JSON.parse(last);
+          if (last.file === file && last.time === time) return;
+        }
+        const position = { file, time };
+        localStorage.setItem(remember_key, JSON.stringify(position));
+      }, 10000);
+      <:endif:remember_position:>
+      <:if:playback_rate:>
+      const speed = document.getElementById("playback_rate");
+      audio.preservesPitch = true;
+      function set_playback_rate(value) {
+        audio.playbackRate = parseFloat(value);
+        <:if:remember_rate:>
+        localStorage.setItem(rate_key, value);
+        <:endif:remember_rate:>
+      }
+      function set_speed_text(value) {
+        speed.parentElement.querySelector("span").innerHTML = "Speed &times;" + value;
+      }
+      <:if:remember_rate:>
+      const rate_key = "<:uuid:>_playback_rate";
+      window.addEventListener("load", () => {
+        let rate = localStorage.getItem(rate_key) ?? null;
+        if (!rate) return;
+        speed.value = rate;
+        set_playback_rate(rate);
+        set_speed_text(rate);
+        console.log(speed.value);
+      }, { once: true });
+      <:endif:remember_rate:>
+      speed.oninput = (event) => {
+        set_speed_text(event.target.value);
+      };
+      speed.onchange = (event) => {
+        set_playback_rate(event.target.value);
+      };
+      <:endif:playback_rate:>
     </script>
     <style type="text/css">
 body {
