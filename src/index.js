@@ -310,6 +310,94 @@ delegate(cover_art_block, ".cover_art_remove", "click", () => {
 cover_art_rerender();
 
 
+/**
+ * - filename (string) — The name of the imported file, with its extension
+ * - type (string) — The mimetype of the imported file
+ * - is_image (bool) — Whether the file is an image or not
+ * - file (Blob) — The file itself
+ * - url (string) — A cached link to the file's blob, usable in the preview box
+ */
+const extras_datastore = [];
+const extra_template = `
+  <div class="extra well" data-extra-idx="<:idx:>">
+    <button type="button" class="extra_remove">remove file</button>
+    <input class="extra_filename" type="text" value="<:filename:>" placeholder="extra file name"/>
+    <span class="extra_type"><:type:></span>
+    <:if:is_image:>
+    <img src="<:url:>" class="image_preview" />
+    <:endif:is_image:>
+  </div>
+`;
+const extras_list = $(".extras_list");
+function extras_rerender() {
+  extras_list.innerHTML = extras_datastore
+    .map((extra, idx) => applyVarsToTemplate(extra_template, {
+      ...extra,
+      idx,
+    })).join("");
+};
+
+/**
+ * @param {Blob} file — the arbitrary file to import
+ */
+async function add_extra(file) {
+  const extra = {
+    file,
+    url: URL.createObjectURL(file)
+  };
+  if (file instanceof File) {
+    const { name, type } = file;
+    extra.filename = name;
+    extra.is_image = type.includes('image/');
+    extra.type = type ? type : name.substring(name.lastIndexOf('.') + 1);
+  }
+
+  extras_datastore.push(extra);
+
+  sort_extras();
+
+  return extra;
+};
+function sort_extras() {
+  extras_datastore.sort((a, b) => {
+    if (a.type === b.type) {
+      const a_filename = a.filename.toLowerCase();
+      const b_filename = b.filename.toLowerCase();
+      if (a_filename === b_filename) return 0;
+      return a_filename < b_filename ? -1 : 1;
+    }
+    return a.type < b.type ? -1 : 1;
+  });
+}
+
+const add_extra_button = $("#add_extra_button");
+const add_extras_input = $("#add_extras_input");
+add_extra_button.onclick = () => {
+  add_extras_input.click();
+};
+add_extras_input.onchange = async e => {
+  const promises = [...e.target.files].map(add_extra);
+  await Promise.all(promises);
+  extras_rerender();
+  e.target.value = "";
+  make_preview();
+};
+extras_rerender();
+
+// Event delegation for the sound list
+delegate(extras_list, '.extra_remove', 'click', function (e) {
+  const idx = Number(this.closest('.extra').getAttribute('data-extra-idx'));
+  extras_datastore.splice(idx, 1);
+  extras_rerender();
+});
+delegate(extras_list, '.extra_filename', 'change', function() {
+  const idx = Number(this.closest('.extra').getAttribute('data-extra-idx'));
+  extras_datastore[idx].filename = this.value.trim();
+  sort_extras();
+  extras_rerender();
+});
+
+
 async function serialize(final) {
   gather_fields();
   let data = {
@@ -325,6 +413,13 @@ async function serialize(final) {
     title: song.title,
     time: song.time
   }));
+  if (extras_datastore.length > 0) {
+    data.extras = extras_datastore.map((extra, idx) => ({
+      idx: idx + 1,
+      filename: extra.filename,
+      type: extra.type,
+    }));
+  }
   return data;
 }
 async function deserialize(file) {
@@ -358,9 +453,25 @@ async function deserialize(file) {
     delete cover_datastore.filename;
     delete cover_datastore.url;
   }
+  // Deserialize extra files.
+  extras_datastore.length = 0;
+  if (data.extras) {
+    for (const extra of data.extras) {
+      promises.push(
+        archive.files[extra.filename].async('blob')
+        .then(blob => add_extra(blob))
+        .then(extraStored => {
+          extraStored.filename = extra.filename;
+          extraStored.type = extra.type;
+          extraStored.is_image = extra.type.includes('image/');
+        })
+      );
+    }
+  }
   await Promise.all(promises);
   cover_art_rerender();
   songs_rerender();
+  extras_rerender();
   make_preview();
 };
 
@@ -406,6 +517,9 @@ export_button.onclick = async (e) => {
   if (cover_datastore.file) {
     zip.file(cover_datastore.filename, cover_datastore.file);
   }
+  for (const extra of extras_datastore) {
+    zip.file(extra.filename, extra.file);
+  }
   const zip_blob = await zip.generateAsync({type:"blob"})
   const a = document.createElement('a');
   a.download = data.album + "_blamscamp.zip";
@@ -417,6 +531,11 @@ export_button.onclick = async (e) => {
 };
 const make_preview = async () => {
   const data = await serialize(false);
+  if (data.settings.theme_css) {
+    for (const extra of extras_datastore) {
+      data.settings.theme_css = data.settings.theme_css.replace(new RegExp(extra.filename, 'g'), extra.url);
+    }
+  }
   $("iframe").srcdoc = generate(data, false);
 };
 $("#generate").onclick = () => {

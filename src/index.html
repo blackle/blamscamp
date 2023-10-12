@@ -56,6 +56,13 @@
           <summary>custom css</summary>
           <textarea class="code_editor" data-stored-scope="settings" data-stored-key="theme_css"></textarea>
         </details>
+        
+        <details class="well">
+          <summary>additional files</summary>
+          <button type="button" id="add_extra_button">add files</button>
+          <input class="hidden" type="file" accept="*" multiple="true" id="add_extras_input" />
+          <div class="extras_list"></div>
+        </details>
 
         <button type="button" id="generate">generate</button>
         <button type="button" id="export">export zip</button> <div id="export_spinner" class="spinner hidden"></div>
