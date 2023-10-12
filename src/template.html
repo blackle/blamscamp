@@ -11,7 +11,7 @@
     <svg style="display: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24">
       <symbol id="icon_play" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></symbol>
       <symbol id="icon_pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></symbol>
-      <symbol id="icon_load" viewBox="0 0 12 24"><circle cx="18" cy="12" r="8"></circle></symbol>
+      <symbol id="icon_load" viewBox="0 0 24 24"><circle cy="12" cx="12" stroke="black" fill="none" r="8" stroke-width="2" stroke-dasharray="8,8"></circle></symbol>
     </svg>
     <div class="column_left">
       <:if:album:>
@@ -339,10 +339,10 @@ button span {
 }
 @keyframes rotating {
   from {
-    transform: translateX(-50%) rotate(0deg);
+    transform: rotate(0deg);
   }
   to {
-    transform: translateX(-50%) rotate(360deg);
+    transform: rotate(360deg);
   }
 }
 button.loading .icon {
