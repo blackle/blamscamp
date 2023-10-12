@@ -208,10 +208,6 @@ async function add_song(file) {
   }
 
   songs_datastore.push(song);
-  songs_datastore.sort((a, b) => {
-    if (a.track === b.track) return 0;
-    return a.track < b.track ? -1 : 0;
-  });
   return song;
 };
 const add_song_button = $("#add_song_button");
@@ -223,6 +219,20 @@ add_song_button.onclick = () => {
 add_songs_input.onchange = async e => {
   const promises = [...e.target.files].map(add_song);
   await Promise.all(promises);
+
+  // resort songs after batch adding
+  function track_key(a) {
+    if (isNaN(a.track)) {
+      return -1;
+    } else {
+      return parseInt(a.track, 10);
+    }
+  }
+  songs_datastore.sort((a, b) => {
+    return track_key(a) - track_key(b);
+  });
+  console.log(songs_datastore);
+
   songs_rerender();
   e.target.value = "";
   make_preview();
