@@ -504,6 +504,7 @@ function generate(data, final) {
     blamscamp_version: data.blamscamp_version,
     album: data.album,
     artist: data.artist,
+    description: md(data.description),
     cover: data.cover,
     songs: songs.join("\n"),
     ...data.settings

@@ -8,6 +8,7 @@
     <script type="text/javascript" src="jszip.min.js"></script>
     <script type="text/javascript" src="jsmediatags.min.js"></script>
     <script type="text/javascript" src="iro.min.js"></script>
+    <script type="text/javascript" src="md.min.js"></script>
     <link rel="stylesheet" href="index.css">
   </head>
   <body>
@@ -17,6 +18,13 @@
       <form id="editor">
         <div><input class="meta_fields" type="text" placeholder="album title" data-stored-key="album"/></div>
         <div><input class="meta_fields" type="text" placeholder="artist name" data-stored-key="artist"/></div>
+
+        <details class="well">
+          <summary>album description</summary>
+          <p style="text-align: right;"><small>accepts <a href="https://www.markdownguide.org/getting-started/">markdown</a></small></p>
+          <textarea class="code_editor" data-stored-key="description"></textarea>
+        </details>
+        
         <input class="hidden" type="file" accept="image/*" id="cover_input"/>
         <div class="well">
           <span class="cover_art"></span>

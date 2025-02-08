@@ -20,6 +20,9 @@
       <:if:artist:>
       <h3>by <span class="artist"><:artist:></span></h3>
       <:endif:artist:>
+      <:if:description:>
+      <div class="description"><:description:></div>
+      <:endif:description:>
       <div class="player">
         <button class="play loading">
           <svg class="icon">
@@ -59,7 +62,16 @@
     <:if:cover:>
     <div class="column_right">
       <img src="<:cover:>" class="cover"/>
+      <:if:description:>
+      <div class="description"><:description:></div>
+      <:endif:description:>
     </div>
+    <:else:cover:>
+    <:if:description:>
+    <div class="column_right">
+      <div class="description"><:description:></div>
+    </div>
+    <:endif:description:>
     <:endif:cover:>
     <script>
       function make_button(icon) {
@@ -290,6 +302,9 @@ body {
 .column_left {
   flex: 1 1 auto;
 }
+.column_left .description {
+  display: none;
+}
 
 .column_right {
   width: 250px;
@@ -303,6 +318,12 @@ body {
 
   .column_right {
     width: 100%;
+  }
+  .column_right .description {
+    display: none;
+  }
+  .column_left .description {
+    display: unset;
   }
 }
 
@@ -405,7 +426,7 @@ button.loading .icon {
   color: <:highlight_color:>;
 }
 
-h1, h2, h3, .player {
+h1, h2, h3, .player, .description {
   margin: 5px 10px;
 }
 
