@@ -69,6 +69,15 @@
         button.classList.add(playing === null ? "loading" : (playing ? "playing" : "paused"));
         button.classList.remove(...(playing === null ? ["playing", "paused"] : (playing ? ["paused", "loading"] : ["playing", "loading"])));
         button.innerHTML = make_button(playing === null ? "load" : (playing ? "pause" : "play"));
+        set_song_item_class(button, playing);
+      }
+      function set_song_item_class(button, playing) {
+        const li = button.closest("li");
+        if (li) {
+          li.classList.add(playing === null ? "loading" : (playing ? "playing" : "paused"));
+          li.classList.remove(...(playing === null ? ["playing", "paused"] : (playing ? ["paused", "loading"] : ["playing", "loading"])));
+          li.classList[!playing && play_buttons[last_played] === button ? "add" : "remove"]("last_played");
+        }
       }
       const audio = new Audio();
       const slider = document.querySelector(".slider");
