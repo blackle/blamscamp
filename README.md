@@ -46,6 +46,8 @@ To host the blamscamp player, all you need are the files provided in the exporte
 
 Pull requests are welcome! But please note the following:
 
+The aesthetics of the blamscamp player was intended to follow the same design ethos as the bandcamp player. That is, very utilitarian. My thinking is that the basic styles of the player should be very simple, so that custom CSS can be more readily applied.
+
 The generated blamscamp player must not receive any added dependencies. The generator must stay as a single, self-contained file that is as small as reasonably possible. The point is for the generated file to be lightweight. Stick to Vanilla JS.
 
 The blamscamp editor, i.e. index.html, also uses Vanilla JS. I see this as a feature and not a bug. I would like to stick to vanilla as long as possible. That said, if things get too cumbersome I would be amenable to using a framework as long as it's lightweight. Right now blamscamp loads almost instantaniously and I would like to keep it that way.
