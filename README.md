@@ -28,6 +28,9 @@ bandcamp is great (at time of writing,) but it would be great to have more optio
 - [x] auto-updating of the generated player
 - [x] allow remembering position
 - [x] allow setting playback rate
+- [ ] next/previous track buttons
+- [ ] custom background image
+- [ ] lyrics display for each track
 - [ ] option to re-encode audio to lower bitrate
 - [ ] improve mobile support on itch.io. ostensibly only unity games are allowed to have dynamic sizing.
 
