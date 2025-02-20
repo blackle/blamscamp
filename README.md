@@ -25,11 +25,11 @@ bandcamp is great (at time of writing,) but it would be great to have more optio
 - [x] custom css field
 - [x] loading indicator
 - [x] option to add additional files to the generated zip file (e.g. so one can set a background image through custom css)
-- [ ] option to re-encode audio to lower bitrate
 - [x] auto-updating of the generated player
-- [ ] improve mobile support on itch.io. ostensibly only unity games are allowed to have dynamic sizing.
 - [x] allow remembering position
 - [x] allow setting playback rate
+- [ ] option to re-encode audio to lower bitrate
+- [ ] improve mobile support on itch.io. ostensibly only unity games are allowed to have dynamic sizing.
 
 ## serving
 
@@ -52,7 +52,8 @@ Additionally, I have set a dependency budget of "4" for this project. The target
 - [x] JSZip (added)
 - [x] an ID3 Tag Parser
 - [x] color picker
-- [ ] a MP3 audio encoder
+- [x] very simple markdown parser (small enough that it only counts as 0.1 of a dependency imo)
+- [ ] an MP3 audio encoder
 
 Dependencies of dependencies count toward the total.
 
@@ -65,4 +66,4 @@ Things we would like:
 
 ## license
 
-This software is public domain, aside from the [jszip](https://stuk.github.io/jszip/), [jsmediatags](https://github.com/aadsm/jsmediatags), and [iro](https://iro.js.org/) libraries.
+This software is public domain, aside from the libraries [jszip](https://stuk.github.io/jszip/), [jsmediatags](https://github.com/aadsm/jsmediatags), [iro](https://iro.js.org/), and [Alamantus's FeatherWiki markdown parser](https://codeberg.org/Alamantus/FeatherWiki/src/commit/1e1bb77f42e057b53cd31acf0345612cbc51c6f4/helpers/md.js).
