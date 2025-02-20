@@ -52,7 +52,6 @@ Additionally, I have set a dependency budget of "4" for this project. The target
 - [x] JSZip (added)
 - [x] an ID3 Tag Parser
 - [x] color picker
-- [x] very simple markdown parser (small enough that it only counts as 0.1 of a dependency imo)
 - [ ] an MP3 audio encoder
 
 Dependencies of dependencies count toward the total.
