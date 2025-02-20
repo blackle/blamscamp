@@ -231,7 +231,6 @@ add_songs_input.onchange = async e => {
   songs_datastore.sort((a, b) => {
     return track_key(a) - track_key(b);
   });
-  console.log(songs_datastore);
 
   songs_rerender();
   e.target.value = "";
