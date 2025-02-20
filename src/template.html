@@ -20,9 +20,11 @@
       <:if:artist:>
       <h3>by <span class="artist"><:artist:></span></h3>
       <:endif:artist:>
+      <:if:description_under_cover:>
       <:if:description:>
       <div class="description"><:description:></div>
       <:endif:description:>
+      <:endif:description_under_cover:>
       <div class="player">
         <button class="play loading">
           <svg class="icon">
@@ -57,21 +59,31 @@
           </p> <i>– <:time:></i></li>
           <:song_end:>
       </ul>
+      <:if:description_under_cover:>
+      <:else:description_under_cover:>
+      <:if:description:>
+      <div class="description"><:description:></div>
+      <:endif:description:>
+      <:endif:description_under_cover:>
       <p class="madewith">made with <a href="https://suricrasia.online/blamscamp/">blamscamp v<:blamscamp_version:></a></p>
     </div>
     <:if:cover:>
     <div class="column_right">
       <img src="<:cover:>" class="cover"/>
+      <:if:description_under_cover:>
       <:if:description:>
       <div class="description"><:description:></div>
       <:endif:description:>
+      <:endif:description_under_cover:>
     </div>
     <:else:cover:>
+    <:if:description_under_cover:>
     <:if:description:>
     <div class="column_right">
       <div class="description"><:description:></div>
     </div>
     <:endif:description:>
+    <:endif:description_under_cover:>
     <:endif:cover:>
     <script>
       function make_button(icon) {
@@ -303,36 +315,43 @@ body {
     background: <:background_color:>;
   <:endif:theme_transparent:>
   color: <:foreground_color:>;
-  display: flex;
-  flex-flow: row nowrap;
+  display: grid;
+  grid-template-columns: 1fr auto;
 }
 
 .column_left {
   flex: 1 1 auto;
 }
+
+<:if:description_under_cover:>
 .column_left .description {
   display: none;
 }
+<:endif:description_under_cover:>
 
 .column_right {
-  width: 250px;
+  max-width: 250px;
   flex: 0 1 auto;
 }
 
 @media (max-width: 500px) {
   body {
-    flex-flow: row wrap-reverse;
+    grid-template-columns: 1fr;
   }
 
   .column_right {
     width: 100%;
+    max-width: 100%;
+    grid-row: 1;
   }
+<:if:description_under_cover:>
   .column_right .description {
     display: none;
   }
   .column_left .description {
-    display: unset;
+    display: block;
   }
+<:endif:description_under_cover:>
 }
 
 .cover {
@@ -427,15 +446,19 @@ button.loading .icon {
 }
 
 .song_list p {
-    margin: 0 5px;
+  margin: 0 5px;
 }
 
 .album, .artist, .title {
   color: <:highlight_color:>;
 }
 
-h1, h2, h3, .player, .description {
+h1, h2, h3, .player, .column_left .description {
   margin: 5px 10px;
+}
+
+.description {
+  word-break: break-word;
 }
 
 .slider {
