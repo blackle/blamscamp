@@ -152,6 +152,9 @@ button:hover {
   opacity: .5;
   pointer-events: none;
 }
+#iro.disabled {
+  opacity: .25;
+}
 
 #version {
   font-size: 60%;
